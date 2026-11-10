@@ -586,15 +586,24 @@ footer {
 }
 
 @media (max-width: 620px) {
-  .sidebar { width: 58px; min-width: 58px; }
-  .logo { padding: 10px; justify-content: center; }
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: min(285px, 84vw);
+    min-width: min(285px, 84vw);
+    height: 100dvh;
+    overflow-y: auto;
+    box-shadow: 12px 0 32px rgba(0,0,0,.45);
+  }
+  .logo { padding: 15px; justify-content: flex-start; }
   .logo > div:not(.logo-icon), .collapse, .search, .nav-group label,
-  .nav:not(.active), .nav.active:not(:has(.nav-dot)), .connection,
-  .profile > div:not(.avatar), .profile > svg { display: none; }
-  .nav-group { padding: 5px; }
-  .nav { justify-content: center; padding: 12px 5px; font-size: 0; }
-  .nav-dot { width: 8px; height: 8px; }
-  .profile { justify-content: center; padding: 10px 4px; }
+  .connection, .profile > div:not(.avatar), .profile > svg { display: initial; }
+  .logo .collapse { display: inline-flex; }
+  .nav-group { padding: 5px 11px 15px; }
+  .nav { justify-content: flex-start; padding: 10px; font-size: 12px; }
+  .nav-dot { width: 6px; height: 6px; }
+  .profile { justify-content: flex-start; padding: 10px 14px; }
   .content { padding: 13px; }
   .top { padding: 0 12px; }
   .headline { align-items: flex-start; flex-direction: column; }
