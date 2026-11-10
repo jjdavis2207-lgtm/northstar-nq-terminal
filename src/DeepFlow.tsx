@@ -26,7 +26,9 @@ export default function DeepFlow({ symbol }: { symbol: 'NQ' | 'MNQ' }) {
         if (!response.ok) throw new Error('history unavailable');
         const payload = await response.json();
         if (!cancelled && Array.isArray(payload.events)) {
-          setEvents(payload.events.filter((item: Event) => item.kind === 'trade').slice(-1500));
+          const trades = payload.events.filter((item: Event) => item.kind === 'trade').slice(-1500) as Trade[];
+          setEvents(trades);
+          if (trades.length) setLastTrade(trades[trades.length - 1]);
           const latestBook = [...payload.events].reverse().find((item: Event) => item.kind === 'book') as Book | undefined;
           if (latestBook) setBook(latestBook);
         }
@@ -98,7 +100,7 @@ export default function DeepFlow({ symbol }: { symbol: 'NQ' | 'MNQ' }) {
         <div className="deepflow-connection"><span className={status.startsWith('Live') ? 'live-dot' : 'waiting-dot'} />{status}</div>
       </div>
       <div className="deepflow-metrics">
-        <div><small>SESSION DELTA · VISIBLE TAPE</small><b className={delta >= 0 ? 'positive' : 'negative'}>{delta > 0 ? '+' : ''}{delta}</b></div>
+        <div><small>RECENT TAPE DELTA · LAST 1,500 TRADES</small><b className={delta >= 0 ? 'positive' : 'negative'}>{delta > 0 ? '+' : ''}{delta}</b></div>
         <div><small>TOP 10 BID SIZE</small><b>{bidTotal.toLocaleString()}</b></div>
         <div><small>TOP 10 ASK SIZE</small><b>{askTotal.toLocaleString()}</b></div>
         <div><small>LAST TRADE</small><b>{lastTrade ? lastTrade.price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'}</b></div>
