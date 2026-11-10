@@ -16,6 +16,8 @@ const validSymbols = new Set(['NQ', 'MNQ']);
 const validTimeframes = new Set(['1m', '2m', '5m', '15m', '30m', '1H', '4H', '1D']);
 const timeframeMs = { '1m': 60_000, '2m': 120_000, '5m': 300_000, '15m': 900_000, '30m': 1_800_000, '1H': 3_600_000, '4H': 14_400_000, '1D': 86_400_000 };
 const history = new Map();
+const orderFlowHistory = new Map();
+const MAX_ORDERFLOW_EVENTS = 2_000;
 let lastIngestAt = 0;
 let providerName = process.env.NORTHSTAR_MARKET_DATA_PROVIDER || 'No provider configured';
 
@@ -209,6 +211,54 @@ app.post('/api/market-data/tick', (req, res) => {
     if (client.readyState === WebSocket.OPEN) client.send(status);
   }
   res.status(202).json({ accepted: true, symbol: normalizedSymbol, updatedTimeframes: updated, provider: providerName });
+});
+
+
+app.get('/api/orderflow/history', (req, res) => {
+  const symbol = String(req.query.symbol || 'MNQ').toUpperCase();
+  if (!validSymbols.has(symbol)) return res.status(400).json({ error: 'Unsupported symbol' });
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ symbol, events: orderFlowHistory.get(symbol) || [], connected: isFresh() });
+});
+
+app.post('/api/orderflow/ingest', (req, res) => {
+  if (!INGEST_TOKEN) return res.status(503).json({ error: 'Market-data ingestion is disabled until NORTHSTAR_INGEST_TOKEN is configured' });
+  if ((req.get('authorization') || '') !== `Bearer ${INGEST_TOKEN}`) return res.status(401).json({ error: 'Unauthorized market-data publisher' });
+
+  const event = req.body || {};
+  const symbol = String(event.symbol || '').toUpperCase();
+  const timestamp = Number(event.timestamp);
+  const kind = String(event.kind || '');
+  if (!validSymbols.has(symbol) || !Number.isFinite(timestamp) || timestamp <= 0 || !['trade', 'book'].includes(kind)) {
+    return res.status(400).json({ error: 'Expected NQ/MNQ order-flow trade or book event with Unix-millisecond timestamp' });
+  }
+
+  if (kind === 'trade') {
+    const price = Number(event.price);
+    const size = Number(event.size);
+    if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(size) || size <= 0 || !['buy', 'sell', 'unknown'].includes(event.aggressor)) {
+      return res.status(400).json({ error: 'Invalid trade price, size, or aggressor side' });
+    }
+  }
+
+  const safeEvent = {
+    kind, symbol, timestamp,
+    ...(kind === 'trade' ? { price: Number(event.price), size: Number(event.size), aggressor: event.aggressor } : {}),
+    ...(kind === 'book' && Array.isArray(event.bids) && Array.isArray(event.asks)
+      ? { bids: event.bids.slice(0, 10), asks: event.asks.slice(0, 10) } : {})
+  };
+  const events = orderFlowHistory.get(symbol) || [];
+  events.push(safeEvent);
+  if (events.length > MAX_ORDERFLOW_EVENTS) events.splice(0, events.length - MAX_ORDERFLOW_EVENTS);
+  orderFlowHistory.set(symbol, events);
+
+  if (typeof event.provider === 'string' && event.provider.trim()) providerName = event.provider.trim().slice(0, 80);
+  lastIngestAt = Date.now();
+  const message = JSON.stringify({ type: 'orderflow', ...safeEvent });
+  for (const client of wss.clients) {
+    if (client.readyState === WebSocket.OPEN && client.symbol === symbol) client.send(message);
+  }
+  res.status(202).json({ accepted: true, symbol, kind });
 });
 
 app.use(express.static(path.resolve(__dirname, '../dist')));
