@@ -307,7 +307,7 @@ function App() {
                   <p>Professional Nasdaq futures trading workspace.</p>
                 </div>
                 <div className="headline-actions">
-                  <span className="status-chip">{chartMode === 'tradingview' ? 'TradingView chart enabled' : 'Awaiting Northstar feed'}</span>
+                  <span className="status-chip">{chartMode === 'tradingview' ? 'TradingView embedded chart (CME may be delayed)' : 'Awaiting Northstar feed'}</span>
                   <button className="settings-btn"><Settings size={16} /></button>
                 </div>
               </div>
@@ -338,7 +338,7 @@ function App() {
                     </div>
 
                     <div className="chart-source-switch" role="group" aria-label="Chart data source">
-                      <button className={chartMode === 'tradingview' ? 'active' : ''} onClick={() => setChartMode('tradingview')}>TradingView</button>
+                      <button className={chartMode === 'tradingview' ? 'active' : ''} onClick={() => setChartMode('tradingview')}>TradingView (delayed)</button>
                       <button className={chartMode === 'northstar' ? 'active' : ''} onClick={() => setChartMode('northstar')}>Northstar Feed</button>
                     </div>
                     {chartMode === 'tradingview'
