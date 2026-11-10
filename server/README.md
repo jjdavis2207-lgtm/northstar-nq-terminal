@@ -49,9 +49,9 @@ Set `NORTHSTAR_INGEST_TOKEN` as a private environment variable on the API host. 
 An authorized provider-side adapter can publish a validated trade tick (preferred; Northstar aggregates it into supported candles):
 
 ```bash
-curl -X POST "https://YOUR-NORTHSTAR-HOST/api/market-data/tick" \\
-  -H "Authorization: Bearer $NORTHSTAR_INGEST_TOKEN" \\
-  -H "Content-Type: application/json" \\
+curl -X POST "https://YOUR-NORTHSTAR-HOST/api/market-data/tick" \
+  -H "Authorization: Bearer $NORTHSTAR_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
   -d '{"provider":"AUTHORIZED_PROVIDER","symbol":"MNQ","price":25000,"size":1,"timestamp":1794312000000}'
 ```
 
