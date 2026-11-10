@@ -6,6 +6,7 @@ import PropAccounts from './PropAccounts';
 import LiveMarketChart from './LiveMarketChart';
 import TradingViewChart from './TradingViewChart';
 import DeepFlow from './DeepFlow';
+import MarketLab from './MarketLab';
 import {
   Activity,
   BarChart3,
@@ -426,6 +427,8 @@ function App() {
                 </div>
               </div>
             </>
+          ) : ['Market Structure', 'Volume Analysis', 'Trade Scanner', 'Strategy Lab', 'Market Replay'].includes(activePage) ? (
+            <MarketLab page={activePage} />
           ) : activePage === 'Deep Flow' ? (
             <DeepFlow symbol={symbol} />
           ) : activePage === 'Risk Manager' ? (
