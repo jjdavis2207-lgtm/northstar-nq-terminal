@@ -54,6 +54,17 @@ def enqueue_event(payload):
         log.error("Northstar publish queue full; dropping event to protect feed process")
 
 def on_record(record):
+    # Parent-symbol mapping messages identify each currently listed front-month contract.
+    if isinstance(record, db.SymbolMappingMsg):
+        parent_symbol = str(getattr(record, "stype_in_symbol", "")).upper()
+        instrument_id = int(getattr(record, "instrument_id", 0))
+        if instrument_id and parent_symbol.startswith("MNQ"):
+            instrument_symbols[instrument_id] = "MNQ"
+        elif instrument_id and parent_symbol.startswith("NQ"):
+            instrument_symbols[instrument_id] = "NQ"
+        log.info("Resolved %s instrument_id=%s", parent_symbol, instrument_id)
+        return
+
     # Databento MBP-10 prices are fixed-point integers with 1e-9 scale.
     ts_ns = int(get_field(record, "ts_event", 0))
     if not ts_ns:
@@ -126,12 +137,6 @@ def publish_loop():
 def main():
     threading.Thread(target=publish_loop, daemon=True).start()
     client = db.Live(key=DATABENTO_KEY)
-    client.subscribe(
-        dataset=DATASET,
-        schema="definition",
-        stype_in="parent",
-        symbols=SYMBOLS,
-    )
     client.subscribe(
         dataset=DATASET,
         schema=SCHEMA,
