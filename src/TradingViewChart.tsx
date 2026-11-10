@@ -64,7 +64,7 @@ export default function TradingViewChart({ symbol, timeframe }: Props) {
       hide_volume: false,
       save_image: true,
       withdateranges: true,
-      studies: ['Volume']
+      studies: []
     });
     host.appendChild(script);
 
