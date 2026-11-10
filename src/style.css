@@ -602,3 +602,52 @@ footer {
   .chart-canvas { height: 340px; }
   footer { flex-direction: column; }
 }
+
+
+/* Risk manager and data connections */
+.risk-page, .connections-page { display: flex; flex-direction: column; gap: 17px; }
+.risk-intro { display: flex; align-items: center; gap: 15px; padding: 20px; background: #101c29; border: 1px solid #263648; border-radius: 8px; }
+.risk-intro h2 { margin: 6px 0; font-size: 21px; }
+.risk-intro p, .provider-card p, .platform-card p { margin: 0; color: #8999ac; font-size: 11px; line-height: 1.65; }
+.risk-workspace { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); gap: 14px; }
+.risk-card, .provider-card, .platform-card { background: #0e1722; border: 1px solid #253244; border-radius: 7px; padding: 17px; min-width: 0; }
+.risk-card-title, .provider-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #dce6f0; font-size: 12px; }
+.risk-card-title > span { color: #72849a; font-size: 10px; }
+.risk-toggle { display: flex; gap: 7px; margin: 17px 0 12px; }
+.risk-toggle button { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 66px; padding: 8px 13px; color: #9eacbd; background: #111c29; border: 1px solid #293749; border-radius: 5px; font-size: 11px; }
+.risk-toggle button.selected { color: #75e0bf; background: #173d37; border-color: #286858; }
+.direction-toggle { margin-top: 0; }
+.risk-field { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; color: #8999ac; font-size: 10px; }
+.risk-field input { width: 100%; min-width: 0; padding: 10px 11px; color: #e7edf6; background: #0a121c; border: 1px solid #293749; border-radius: 5px; outline: none; font-size: 12px; }
+.risk-field input:focus { border-color: #50b998; }
+.risk-input-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.contract-note { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 17px; padding: 12px; background: #111c29; border-radius: 5px; color: #8292a5; font-size: 10px; }
+.contract-note b { color: #dce6f0; font-weight: 600; }
+.risk-disclaimer { margin: 13px 0 0; color: #6f8095; font-size: 10px; line-height: 1.6; }
+.contracts-result { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 22px 10px; margin: 12px 0; background: #101e2b; border: 1px solid #263648; border-radius: 6px; }
+.contracts-result span, .contracts-result small { color: #8999ac; font-size: 10px; }
+.contracts-result strong { color: #75e0bf; font-size: 42px; line-height: 1.2; }
+.result-row { display: flex; justify-content: space-between; gap: 10px; padding: 12px 2px; border-top: 1px solid #1d2a39; color: #8999ac; font-size: 10px; }
+.result-row b { color: #dce6f0; font-size: 11px; }
+.result-row .loss-value { color: #ef9a8c; }
+.result-row .profit-value { color: #75e0bf; }
+.risk-invalid { margin: 12px 0; padding: 11px; border: 1px solid #654b36; border-radius: 5px; background: #251f19; color: #e3c18b; font-size: 10px; line-height: 1.6; }
+.connection-alert { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid #654b36; background: #251f19; color: #e2c18b; border-radius: 7px; }
+.connection-alert b, .connection-alert span { display: block; }
+.connection-alert b { font-size: 12px; }
+.connection-alert span { margin-top: 6px; color: #b8a98d; font-size: 11px; line-height: 1.65; }
+.connection-section-title { margin: 5px 0 -7px; color: #dce6f0; font-size: 12px; }
+.provider-grid, .platform-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.provider-card-head b, .platform-card b { color: #e2eaf4; font-size: 13px; }
+.provider-card-head span { color: #e1bd7c; font-size: 9px; }
+.provider-card p, .platform-card p { margin-top: 10px; }
+.provider-card small { display: block; margin-top: 15px; color: #72849a; font-size: 9px; line-height: 1.5; }
+.platform-card a { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; color: #75dabb; font-size: 10px; text-decoration: none; }
+.platform-card a:hover { text-decoration: underline; }
+.connection-security { display: flex; gap: 11px; padding: 15px; background: #101e2b; border: 1px solid #263648; border-radius: 7px; color: #70d6b5; }
+.connection-security b { color: #dce6f0; font-size: 11px; }
+.connection-security p { margin: 6px 0 0; color: #8999ac; font-size: 10px; line-height: 1.6; }
+.quick-tool-link { width: 100%; border: 0; cursor: pointer; font: inherit; }
+.quick-tool-link:hover { color: #75e0bf; background: #12251f; }
+@media (max-width: 950px) { .risk-workspace { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .risk-input-grid, .provider-grid, .platform-grid { grid-template-columns: 1fr; } .risk-intro { align-items: flex-start; } }
