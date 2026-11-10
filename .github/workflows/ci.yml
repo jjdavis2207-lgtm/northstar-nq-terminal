@@ -20,5 +20,7 @@ jobs:
         run: npm install
       - name: Validate API server syntax
         run: node --check server/index.js
+      - name: Validate Databento worker syntax
+        run: python -m py_compile server/databento_feed.py
       - name: Build frontend
         run: npm run build
