@@ -3,6 +3,7 @@ import { useState } from 'react';
 import RiskManager from './RiskManager';
 import DataConnections from './DataConnections';
 import PropAccounts from './PropAccounts';
+import LiveMarketChart from './LiveMarketChart';
 import {
   Activity,
   BarChart3,
@@ -329,30 +330,7 @@ function App() {
                       <button><SlidersHorizontal size={15} /></button>
                     </div>
 
-                    <div className="chart-canvas">
-                      <div className="gridlines" />
-                      <div className="axis-y">
-                        <span>—</span><span>—</span><span>—</span>
-                        <span>—</span><span>—</span><span>—</span>
-                      </div>
-                      <div className="axis-x">
-                        <span>09:00</span>
-                        <span>10:00</span>
-                        <span>11:00</span>
-                        <span>12:00</span>
-                        <span>13:00</span>
-                        <span>14:00</span>
-                      </div>
-                      <div className="chart-center">
-                        <div className="chart-icon"><WifiOff size={25} /></div>
-                        <b>Waiting for market data</b>
-                        <span>
-                          Connect an authorized market data provider to display
-                          real-time {symbol} price action and chart candles.
-                        </span>
-                        <small>NO SIMULATED PRICES ARE DISPLAYED</small>
-                      </div>
-                    </div>
+                    <LiveMarketChart symbol={symbol} timeframe={timeframe} />
 
                     <div className="indicator-strip">
                       <span>VWAP <em>Waiting for data</em></span>
