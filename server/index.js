@@ -32,7 +32,7 @@ app.use((req, res, next) => {
     .map(value => value.trim())
     .filter(Boolean);
   const isLocalDev = process.env.NODE_ENV !== 'production'
-    && /^https?:\\/\\/(localhost|127\\.0\\.0\\.1)(:\\d+)?$/.test(origin);
+    && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
   const sameOrigin = origin === `${req.protocol}://${req.get('host')}`;
 
   if (configured.length && !configured.includes(origin)) {
