@@ -19,6 +19,7 @@ let lastIngestAt = 0;
 let providerName = process.env.NORTHSTAR_MARKET_DATA_PROVIDER || 'No provider configured';
 
 app.disable('x-powered-by');
+app.set('trust proxy', 1);
 app.use(express.json({ limit: '256kb' }));
 
 app.use((req, res, next) => {
