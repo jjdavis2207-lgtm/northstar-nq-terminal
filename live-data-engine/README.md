@@ -5,17 +5,15 @@ A separate, provider-neutral NQ/MNQ market processing service. It runs independe
 ## What is implemented
 
 - Authenticated HTTP ingestion for normalized trade and quote events
+- Optional Rithmic R|Protocol bridge adapter (live last-trade and best-bid/offer updates)
 - NQ/MNQ symbol normalization and 0.25-point tick validation
 - Trade ID deduplication
 - In-memory rolling trade history (up to 50,000 trades per symbol)
 - UTC-aligned 1-minute, 5-minute, and 15-minute OHLCV candles
-- Latest trade/quote snapshots
-- REST replay and candle endpoints
-- Symbol-filtered WebSocket broadcasting
-- Health/status metrics and input validation
-- Automated Node.js tests for normalization, candle generation, quote validation, and deduplication
+- Latest trade/quote snapshots, REST replay, and symbol-filtered WebSocket output
+- Health/status metrics and automated Node.js tests
 
-This is a processing engine. It does not create prices, generate exchange transactions, or include a market-data subscription.
+This service processes real events from an upstream provider. It does not create exchange prices or include market-data entitlements.
 
 ## Render deployment
 
@@ -27,15 +25,30 @@ This is a processing engine. It does not create prices, generate exchange transa
 
 The main Northstar website/service is not modified by this branch.
 
+## Rithmic connection (optional)
+
+The adapter connects to the open-source [Rithmic Node.js Market Data API](https://github.com/parbhatc/Rithmic), which speaks Rithmic R|Protocol and exposes normalized quote messages over WebSocket.
+
+Run that bridge as a **private service on the same hosting network** as Northstar. Do not expose its unauthenticated `/ws` or REST endpoints to the public internet. The upstream project currently accepts Rithmic credentials in its own environment; keep them there, never in this repository or browser code.
+
+Configure these Northstar environment variables only after you have valid Rithmic API credentials and market-data entitlement:
+
+- `NORTHSTAR_RITHMIC_BRIDGE_HTTP`: private bridge base URL, e.g. `http://rithmic-bridge:4000`
+- `NORTHSTAR_RITHMIC_BRIDGE_WS`: private bridge WebSocket URL, e.g. `ws://rithmic-bridge:4000/ws`
+
+The adapter automatically subscribes to `CME:NQ` and `CME:MNQ`, accepts actual Rithmic last-trade messages and best-bid/offer updates, and normalizes them into Northstar events. It does not infer trades from quote changes. The bridge requires a valid Rithmic login, supported Rithmic system, API access, and exchange entitlements. Rithmic allows one concurrent session per login; connecting may disconnect another platform using the same login.
+
+The connector software is open source; this does not make Rithmic market data free. This setup is not enabled until the bridge URLs are configured.
+
 ## Render environment variables
 
-Required to enable ingestion:
+Required to enable external HTTP ingestion:
 
-- `NORTHSTAR_INGEST_TOKEN`: a long random secret. Send it as `Authorization: Bearer <token>` or `x-api-key: <token>`. Do not put it in browser code or commit it to GitHub.
+- `NORTHSTAR_INGEST_TOKEN`: a long random secret. Send it as `Authorization: Bearer <token>` or `x-api-key: <token>`. Never put it in browser code or commit it to GitHub.
 
 Required before public market-data output:
 
-- `PUBLIC_LIVE_DISTRIBUTION_APPROVED=true`: leave unset/false until the upstream data provider explicitly authorizes Northstar's intended public distribution. This controls public REST market endpoints and WebSocket broadcasts.
+- `PUBLIC_LIVE_DISTRIBUTION_APPROVED=true`: leave unset/false until the upstream provider explicitly authorizes Northstar's intended public distribution. This controls public REST market endpoints and WebSocket broadcasts.
 
 No provider credentials, paid service, or CME entitlement are included or created by this code.
 
@@ -56,7 +69,7 @@ Trade example:
   "timestamp": 1794321000000,
   "price": 25000.25,
   "quantity": 2,
-  "side": "buy",
+  "side": "unknown",
   "source": "authorized-provider-name"
 }
 ```
@@ -64,7 +77,6 @@ Trade example:
 Quote example:
 ```json
 {
-  "id": "provider-quote-unique-id",
   "type": "quote",
   "symbol": "NQ",
   "timestamp": 1794321000000,
@@ -75,8 +87,6 @@ Quote example:
   "source": "authorized-provider-name"
 }
 ```
-
-A successful ingest returns HTTP 202. A duplicate trade ID is ignored. Prices must align to the 0.25-point NQ/MNQ tick. Quote events require a valid non-crossed bid/ask. Timestamps may be ISO strings, Unix seconds, or Unix milliseconds.
 
 ## Read endpoints
 
@@ -89,16 +99,16 @@ A successful ingest returns HTTP 202. A duplicate trade ID is ignored. Prices mu
 - `GET /api/replay/MNQ?limit=500`
 - WebSocket: `/ws?symbol=NQ` or `/ws?symbol=MNQ`
 
-The read endpoints and WebSocket broadcasting return/stream market data only when `PUBLIC_LIVE_DISTRIBUTION_APPROVED=true`. Health and status remain readable.
+Public read endpoints and WebSocket broadcasts stay disabled unless `PUBLIC_LIVE_DISTRIBUTION_APPROVED=true`. Health and status remain readable.
 
 ## Important limitations
 
-- No live data provider is connected by default. `/api/status` reports `dataSource: none connected` until an authorized provider is integrated.
-- Ingestion data and replay history are in memory and reset on restart/redeploy. This is not durable historical storage.
-- Candle intervals are UTC-aligned. They are not yet exchange-session-aware and do not implement settlement, rollover, or holiday calendars.
-- This version does not calculate aggressor side from quotes, footprint/delta, MBO, DOM, heatmaps, or institutional order-flow metrics. Those require the corresponding raw provider fields and a verified decoder.
-- CME Pub/Sub/SBE is not connected in this version. Its entitlement, schema mapping, decoder, cloud subscription, and distribution approval must be completed against the actual CME product.
-- TradingView's private feed is not extracted or scraped. TradingView alert messages are not a substitute for a complete exchange tick/order-book feed.
+- No live provider is connected until the Rithmic bridge URLs and valid credentials/entitlements are configured.
+- Ingestion and replay history are in memory and reset on restart/redeploy; this is not durable multi-year storage.
+- Candle intervals are UTC-aligned, not yet exchange-session-aware; settlement, rollover, and holiday calendars are not implemented.
+- This version does not yet calculate aggressor side, footprint/delta, MBO/DOM, heatmaps, or institutional order-flow metrics. Those need the corresponding licensed raw provider fields and a verified decoder.
+- CME Pub/Sub/SBE is not connected. Its schema, entitlement, decoder, and licensing still need separate implementation.
+- TradingView private feed extraction/scraping is not supported.
 - No synthetic or sample prices are emitted as live market data.
 
 ## Local checks
