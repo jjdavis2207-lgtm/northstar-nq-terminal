@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import RiskManager from './RiskManager';
 import DataConnections from './DataConnections';
 import PropAccounts from './PropAccounts';
@@ -154,6 +154,25 @@ const modules = {
 };
 
 function App() {
+  const [feedStatus, setFeedStatus] = useState({ connected: false, provider: 'No provider configured', lastUpdate: null as number | null, message: 'Checking market-data connection' });
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const response = await fetch('/api/market-data/status', { cache: 'no-store' });
+        if (!response.ok) throw new Error('status unavailable');
+        const status = await response.json();
+        if (!cancelled) setFeedStatus(status);
+      } catch {
+        if (!cancelled) setFeedStatus({ connected: false, provider: 'Northstar API unavailable', lastUpdate: null, message: 'Cannot reach Northstar market-data API' });
+      }
+    };
+    void check();
+    const timer = window.setInterval(check, 15000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, []);
+
   const [activePage, setActivePage] = useState('Trading Terminal');
   const [symbol, setSymbol] = useState<'NQ' | 'MNQ'>('MNQ');
   const [chartMode, setChartMode] = useState<'tradingview' | 'northstar'>('tradingview');
@@ -226,10 +245,10 @@ function App() {
 
           <div className="sidebar-foot">
             <div className="connection">
-              <span className="red-dot" />
+              <span className={feedStatus.connected ? "live-dot" : "red-dot"} />
               <div>
                 <b>Market Data</b>
-                <small>Not connected</small>
+                <small>{feedStatus.connected ? "Connected · " + feedStatus.provider : "Not connected"}</small>
               </div>
             </div>
             <div className="profile">
@@ -255,7 +274,7 @@ function App() {
             Northstar <span>/</span> {activePage}
           </div>
           <div className="topright">
-            <span className="offline"><i /> {chartMode === 'tradingview' ? 'TRADINGVIEW CHART · BROKER NOT CONNECTED' : 'NORTHSTAR FEED DISCONNECTED'}</span>
+            <span className="offline"><i /> {feedStatus.connected ? 'NORTHSTAR FEED · ' + feedStatus.provider : chartMode === 'tradingview' ? 'TRADINGVIEW EMBED · NORTHSTAR FEED OFFLINE' : 'NORTHSTAR FEED DISCONNECTED'}</span>
             <button className="topicon"><CircleHelp size={17} /></button>
             <button className="topicon"><Settings size={17} /></button>
           </div>
@@ -457,7 +476,7 @@ function App() {
           <footer>
             <span>NORTHSTAR TRADING PLATFORM</span>
             <span>NQ / MNQ · CME</span>
-            <span>{chartMode === 'tradingview' ? 'TRADINGVIEW EMBED · NORTHSTAR ACCOUNT FEED PENDING' : 'NORTHSTAR MARKET DATA NOT CONNECTED'}</span>
+            <span>{feedStatus.connected ? 'AUTHORIZED FEED · ' + feedStatus.provider : 'NORTHSTAR MARKET DATA NOT CONNECTED'}</span>
           </footer>
         </section>
       </main>
