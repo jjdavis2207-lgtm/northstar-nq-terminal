@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import RiskManager from './RiskManager';
 import DataConnections from './DataConnections';
+import PropAccounts from './PropAccounts';
 import {
   Activity,
   BarChart3,
@@ -54,6 +55,7 @@ const navigation = [
     items: [
       { name: 'Risk Manager', icon: Shield },
       { name: 'Performance', icon: Target },
+      { name: 'Prop Accounts', icon: Shield },
       { name: 'Data Connections', icon: Database },
       { name: 'Settings', icon: Settings }
     ]
@@ -415,6 +417,8 @@ function App() {
             </>
           ) : activePage === 'Risk Manager' ? (
             <RiskManager />
+          ) : activePage === 'Prop Accounts' ? (
+            <PropAccounts />
           ) : activePage === 'Data Connections' ? (
             <DataConnections />
           ) : (
