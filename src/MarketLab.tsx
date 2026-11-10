@@ -22,7 +22,7 @@ function parseCsv(text: string): Bar[] {
     open: find('open', 'o'), high: find('high', 'h'), low: find('low', 'l'),
     close: find('close', 'c'), volume: find('volume', 'vol', 'v')
   };
-  if (Object.values(indexes).some(index => index < 0) || indexes.time < 0 || indexes.open < 0 || indexes.high < 0 || indexes.low < 0 || indexes.close < 0) {
+  if (indexes.time < 0 || indexes.open < 0 || indexes.high < 0 || indexes.low < 0 || indexes.close < 0) {
     throw new Error('Required columns: time/date, open, high, low, close. Volume is optional.');
   }
   const result: Bar[] = [];
@@ -157,7 +157,7 @@ export default function MarketLab({ page }: Props) {
           <p className="marketlab-muted">Swing points use two completed bars on each side. A break is confirmed only when the latest close moves beyond the most recent detected swing.</p>
         </section> : null}
         {page === 'Volume Analysis' ? <section className="marketlab-card">
-          <h3>Volume by typical-price level · 0.25 increments</h3><div className="marketlab-volume-list">{analysis?.volumeNodes.map(([price,volume])=><div key={price}><span>{price.toLocaleString(undefined,{maximumFractionDigits:2})}</span><div><i style={{width: ((volume / (analysis.volumeNodes[0]?.[1] || 1))*100)+'%'}}/></div><b>{volume.toLocaleString()}</b></div>)}</div>
+          <h3>Volume by typical-price level · 0.25 increments</h3><div className="marketlab-volume-list">{analysis?.volumeNodes.map(([price,volume])=><div key={price}><span>{price.toLocaleString(undefined,{maximumFractionDigits:2})}</span><div><i style={{width: ((volume / (analysis?.volumeNodes[0]?.[1] || 1))*100)+'%'}}/></div><b>{volume.toLocaleString()}</b></div>)}</div>
           <p className="marketlab-muted">This is a candle-based approximation using each bar's typical price, not exchange-level bid/ask volume or a true footprint.</p>
         </section> : null}
         {page === 'Trade Scanner' ? <section className="marketlab-card">
