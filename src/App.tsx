@@ -4,6 +4,7 @@ import RiskManager from './RiskManager';
 import DataConnections from './DataConnections';
 import PropAccounts from './PropAccounts';
 import LiveMarketChart from './LiveMarketChart';
+import TradingViewChart from './TradingViewChart';
 import {
   Activity,
   BarChart3,
@@ -153,7 +154,8 @@ const modules = {
 
 function App() {
   const [activePage, setActivePage] = useState('Trading Terminal');
-  const [symbol, setSymbol] = useState('MNQ');
+  const [symbol, setSymbol] = useState<'NQ' | 'MNQ'>('MNQ');
+  const [chartMode, setChartMode] = useState<'tradingview' | 'northstar'>('tradingview');
   const [timeframe, setTimeframe] = useState('5m');
   const [bottomTab, setBottomTab] = useState('Positions');
   const [search, setSearch] = useState('');
@@ -252,7 +254,7 @@ function App() {
             Northstar <span>/</span> {activePage}
           </div>
           <div className="topright">
-            <span className="offline"><i /> DATA DISCONNECTED</span>
+            <span className="offline"><i /> {chartMode === 'tradingview' ? 'TRADINGVIEW CHART · BROKER NOT CONNECTED' : 'NORTHSTAR FEED DISCONNECTED'}</span>
             <button className="topicon"><CircleHelp size={17} /></button>
             <button className="topicon"><Settings size={17} /></button>
           </div>
@@ -305,7 +307,7 @@ function App() {
                   <p>Professional Nasdaq futures trading workspace.</p>
                 </div>
                 <div className="headline-actions">
-                  <span className="status-chip">Awaiting data connection</span>
+                  <span className="status-chip">{chartMode === 'tradingview' ? 'TradingView chart enabled' : 'Awaiting Northstar feed'}</span>
                   <button className="settings-btn"><Settings size={16} /></button>
                 </div>
               </div>
@@ -315,11 +317,11 @@ function App() {
                   <div className="chart-panel">
                     <div className="chart-head">
                       <div>
-                        <b>{symbol} · Nasdaq Futures</b>
+                        <b>{chartMode === 'tradingview' ? 'TradingView · ' : 'Northstar · '}{symbol} Nasdaq Futures</b>
                         <small>{timeframe} Chart · CME</small>
                       </div>
                       <div className="chart-head-right">
-                        <span className="market-wait">Market data unavailable</span>
+                        <span className="market-wait">{chartMode === 'tradingview' ? 'TradingView market feed' : 'Northstar feed unavailable'}</span>
                         <button><Maximize2 size={15} /></button>
                       </div>
                     </div>
@@ -335,7 +337,13 @@ function App() {
                       <button><SlidersHorizontal size={15} /></button>
                     </div>
 
-                    <LiveMarketChart symbol={symbol} timeframe={timeframe} />
+                    <div className="chart-source-switch" role="group" aria-label="Chart data source">
+                      <button className={chartMode === 'tradingview' ? 'active' : ''} onClick={() => setChartMode('tradingview')}>TradingView</button>
+                      <button className={chartMode === 'northstar' ? 'active' : ''} onClick={() => setChartMode('northstar')}>Northstar Feed</button>
+                    </div>
+                    {chartMode === 'tradingview'
+                      ? <TradingViewChart symbol={symbol} timeframe={timeframe} />
+                      : <LiveMarketChart symbol={symbol} timeframe={timeframe} />}
 
                     <div className="indicator-strip">
                       <span>VWAP <em>Waiting for data</em></span>
@@ -446,7 +454,7 @@ function App() {
           <footer>
             <span>NORTHSTAR TRADING PLATFORM</span>
             <span>NQ / MNQ · CME</span>
-            <span>MARKET DATA NOT CONNECTED</span>
+            <span>{chartMode === 'tradingview' ? 'TRADINGVIEW EMBED · NORTHSTAR ACCOUNT FEED PENDING' : 'NORTHSTAR MARKET DATA NOT CONNECTED'}</span>
           </footer>
         </section>
       </main>
