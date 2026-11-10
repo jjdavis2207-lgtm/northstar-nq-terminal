@@ -808,3 +808,38 @@ footer {
 .deepflow-note { padding:11px 13px; color:#7e90a5; font-size:9px; line-height:1.5; }
 @media(max-width:900px) { .deepflow-grid { grid-template-columns:1fr; } }
 @media(max-width:600px) { .deepflow-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .deepflow-panel > header { align-items:flex-start; flex-direction:column; } .deepflow-panel > header span { text-align:left; } }
+
+
+/* Local CSV analysis, replay and strategy workspaces */
+.marketlab-page { display:flex; flex-direction:column; gap:15px; }
+.marketlab-import { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; padding:16px; border:1px solid #263648; border-radius:8px; background:#101b28; }
+.marketlab-import > div { flex:1; min-width:220px; }
+.marketlab-import b { display:flex; align-items:center; gap:8px; color:#e2eaf4; font-size:12px; }
+.marketlab-import p,.marketlab-muted { margin:7px 0 0; color:#8999ac; font-size:10px; line-height:1.6; }
+.marketlab-upload { display:inline-flex; align-items:center; gap:8px; padding:10px 13px; border:1px solid #286858; border-radius:5px; background:#173d37; color:#75e0bf; font-size:11px; cursor:pointer; }
+.marketlab-upload input { display:none; }
+.marketlab-file { color:#8fa0b4; font-size:10px; }
+.marketlab-error { padding:12px; border:1px solid #754b43; border-radius:6px; background:#291b1b; color:#f0a19a; font-size:11px; }
+.marketlab-empty { min-height:230px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:25px; border:1px dashed #34475c; border-radius:8px; background:#0d1723; color:#6fd5b5; text-align:center; }
+.marketlab-empty b { color:#e2eaf4; font-size:13px; }
+.marketlab-empty span { max-width:460px; color:#8999ac; font-size:10px; line-height:1.6; }
+.marketlab-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.marketlab-metrics > div { display:flex; flex-direction:column; gap:8px; min-width:0; padding:14px; border:1px solid #253548; border-radius:7px; background:#101b28; }
+.marketlab-metrics small,.marketlab-replay-values small { color:#8294a9; font-size:9px; letter-spacing:.04em; }
+.marketlab-metrics b { color:#e4edf6; font-size:18px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.marketlab-card { padding:16px; border:1px solid #263648; border-radius:8px; background:#0d1723; }
+.marketlab-card h3 { margin:0 0 14px; color:#dce6f0; font-size:13px; }
+.marketlab-signal { margin-bottom:13px; padding:13px; border:1px solid #285e51; border-radius:6px; background:#112b27; color:#76dfbd; font-size:13px; font-weight:700; }
+.marketlab-replay-values { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; }
+.marketlab-replay-values > div { display:flex; flex-direction:column; gap:7px; min-width:0; padding:12px; border:1px solid #253548; border-radius:6px; background:#101b28; }
+.marketlab-replay-values b { color:#e2eaf4; font-size:12px; overflow-wrap:anywhere; }
+.marketlab-volume-list { display:flex; flex-direction:column; gap:8px; }
+.marketlab-volume-list > div { display:grid; grid-template-columns:90px minmax(0,1fr) 75px; align-items:center; gap:10px; color:#aab8c9; font-size:10px; }
+.marketlab-volume-list > div > div { height:9px; overflow:hidden; border-radius:5px; background:#1a2938; }
+.marketlab-volume-list i { display:block; height:100%; border-radius:5px; background:#42b995; }
+.marketlab-volume-list b { text-align:right; color:#dce6f0; font-variant-numeric:tabular-nums; }
+.marketlab-parameters { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:14px; }
+.marketlab-parameters label { display:flex; align-items:center; gap:8px; color:#8999ac; font-size:10px; }
+.marketlab-parameters input { width:70px; padding:7px; border:1px solid #293749; border-radius:5px; color:#e7edf6; background:#0a121c; }
+.marketlab-range { width:100%; accent-color:#50d4a8; }
+@media(max-width:650px) { .marketlab-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .marketlab-import { align-items:flex-start; flex-direction:column; } }
