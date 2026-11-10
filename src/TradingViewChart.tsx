@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Props = {
   symbol: 'NQ' | 'MNQ';
@@ -16,14 +16,26 @@ const intervals: Record<string, string> = {
   '1D': 'D'
 };
 
+// TradingView's continuous CME futures symbols. MNQ and NQ are distinct
+// contracts; do not silently fall back to a stock ticker.
+const tradingViewSymbol: Record<Props['symbol'], string> = {
+  NQ: 'CME_MINI:NQ1!',
+  MNQ: 'CME_MINI:MNQ1!'
+};
+
 export default function TradingViewChart({ symbol, timeframe }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const [loadState, setLoadState] = useState<'loading' | 'loaded' | 'fallback'>('loading');
+  const ticker = tradingViewSymbol[symbol];
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
 
+    let active = true;
+    setLoadState('loading');
     host.replaceChildren();
+
     const widget = document.createElement('div');
     widget.className = 'tradingview-widget-container__widget';
     widget.style.width = '100%';
@@ -33,7 +45,7 @@ export default function TradingViewChart({ symbol, timeframe }: Props) {
     const attribution = document.createElement('div');
     attribution.className = 'tradingview-attribution';
     const link = document.createElement('a');
-    link.href = `https://www.tradingview.com/symbols/CME_MINI-${symbol}1!/`;
+    link.href = `https://www.tradingview.com/symbols/${ticker.replace(':', '-')}/`;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.textContent = `${symbol} futures chart by TradingView`;
@@ -44,9 +56,11 @@ export default function TradingViewChart({ symbol, timeframe }: Props) {
     script.type = 'text/javascript';
     script.async = true;
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    script.innerHTML = JSON.stringify({
+    // The official embed reads its JSON configuration from the script body.
+    // Use textContent so React/DOM does not interpret the JSON as markup.
+    script.textContent = JSON.stringify({
       autosize: true,
-      symbol: `CME_MINI:${symbol}1!`,
+      symbol: ticker,
       interval: intervals[timeframe] || '5',
       timezone: 'America/Chicago',
       theme: 'dark',
@@ -66,19 +80,39 @@ export default function TradingViewChart({ symbol, timeframe }: Props) {
       withdateranges: true,
       studies: []
     });
+    script.onload = () => {
+      if (active) setLoadState('loaded');
+    };
+    script.onerror = () => {
+      if (active) setLoadState('fallback');
+    };
     host.appendChild(script);
 
+    // If the external widget never finishes loading, give the user a direct
+    // link to the exact NQ/MNQ chart rather than leaving a misleading blank.
+    const watchdog = window.setTimeout(() => {
+      if (active) setLoadState(current => current === 'loading' ? 'fallback' : current);
+    }, 12000);
+
     return () => {
+      active = false;
+      window.clearTimeout(watchdog);
       host.replaceChildren();
     };
-  }, [symbol, timeframe]);
+  }, [ticker, symbol, timeframe]);
 
   return (
     <div className="tradingview-chart-shell">
       <div className="tradingview-widget-container tradingview-chart-host" ref={hostRef} />
+      {loadState === 'fallback' && (
+        <div className="tradingview-data-note">
+          TradingView's embedded chart did not finish loading. Open the correct {symbol} futures chart directly:
+          {' '}<a href={`https://www.tradingview.com/chart/?symbol=${encodeURIComponent(ticker)}`} target="_blank" rel="noopener noreferrer">Open {ticker} in TradingView</a>.
+        </div>
+      )}
       <div className="tradingview-data-note">
-        TradingView embedded chart · CME real-time data subscriptions do not carry over to embedded widgets, so CME quotes may be delayed. This embed does not connect your Lucid/Tradeify account.
-        {' '}<a href={`https://www.tradingview.com/chart/?symbol=CME_MINI:${symbol}1!`} target="_blank" rel="noopener noreferrer">Open full TradingView for your account data</a>.
+        <b>{ticker}</b> · {timeframe} · CME futures. Embedded chart data may be delayed; a paid TradingView CME entitlement does not automatically transfer into an embedded widget or Northstar.
+        {' '}<a href={`https://www.tradingview.com/chart/?symbol=${encodeURIComponent(ticker)}`} target="_blank" rel="noopener noreferrer">Open full TradingView for your account data</a>.
       </div>
     </div>
   );
