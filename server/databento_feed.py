@@ -26,6 +26,7 @@ if not SYMBOLS:
     raise RuntimeError("Set DATABENTO_SYMBOLS, e.g. NQ.FUT,MNQ.FUT")
 
 events = queue.Queue(maxsize=20000)
+instrument_symbols = {}
 session = requests.Session()
 session.headers.update({"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"})
 
@@ -58,15 +59,15 @@ def on_record(record):
     if not ts_ns:
         return
     timestamp_ms = ts_ns // 1_000_000
-    raw_symbol = enum_text(get_field(record, "symbol", ""))
     instrument_id = int(get_field(record, "instrument_id", 0))
-    # Parent symbology resolves the front-month NQ/MNQ contract stream.
-    symbol = "MNQ" if "MNQ" in raw_symbol else "NQ" if "NQ" in raw_symbol else None
+    raw_symbol = enum_text(get_field(record, "raw_symbol", get_field(record, "symbol", "")))
+    if raw_symbol and instrument_id:
+        if raw_symbol.startswith("MNQ"):
+            instrument_symbols[instrument_id] = "MNQ"
+        elif raw_symbol.startswith("NQ"):
+            instrument_symbols[instrument_id] = "NQ"
+    symbol = instrument_symbols.get(instrument_id)
     if symbol is None:
-        # SDK records may omit a symbol field; use instrument mapping from record metadata.
-        symbol = "NQ" if len(SYMBOLS) == 1 and SYMBOLS[0].startswith("NQ") else None
-    if symbol is None:
-        log.warning("Cannot map Databento record to NQ/MNQ (instrument_id=%s, symbol=%s)", instrument_id, raw_symbol)
         return
 
     action = enum_text(get_field(record, "action", ""))
@@ -125,6 +126,12 @@ def publish_loop():
 def main():
     threading.Thread(target=publish_loop, daemon=True).start()
     client = db.Live(key=DATABENTO_KEY)
+    client.subscribe(
+        dataset=DATASET,
+        schema="definition",
+        stype_in="parent",
+        symbols=SYMBOLS,
+    )
     client.subscribe(
         dataset=DATASET,
         schema=SCHEMA,
