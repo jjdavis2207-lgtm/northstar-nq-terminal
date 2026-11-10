@@ -5,6 +5,7 @@ import DataConnections from './DataConnections';
 import PropAccounts from './PropAccounts';
 import LiveMarketChart from './LiveMarketChart';
 import TradingViewChart from './TradingViewChart';
+import DeepFlow from './DeepFlow';
 import {
   Activity,
   BarChart3,
@@ -406,6 +407,8 @@ function App() {
                 </div>
               </div>
             </>
+          ) : activePage === 'Deep Flow' ? (
+            <DeepFlow symbol={symbol} />
           ) : activePage === 'Risk Manager' ? (
             <RiskManager />
           ) : activePage === 'Prop Accounts' ? (
