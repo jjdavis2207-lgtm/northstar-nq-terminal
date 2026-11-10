@@ -3,6 +3,7 @@ import http from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
 import { WebSocketServer, WebSocket } from 'ws';
 import { ingestMarketEvent, getCandles, getEngineMetrics, getMarketSnapshot, getTrades } from './market-engine.js';
+import { createRithmicBridgeAdapter } from './adapters/rithmic-bridge.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -13,6 +14,7 @@ const port = Number(process.env.PORT || 8788);
 const ingestToken = process.env.NORTHSTAR_INGEST_TOKEN || '';
 const distributionApproved = process.env.PUBLIC_LIVE_DISTRIBUTION_APPROVED === 'true';
 const startedAt = Date.now();
+let rithmicStatus = { configured: false, connected: false, received: 0, accepted: 0, lastError: null };
 
 function safeEqual(a, b) {
   if (!a || !b) return false;
@@ -30,9 +32,9 @@ function status() {
   const metrics = getEngineMetrics();
   return {
     service: 'Northstar Live Data Engine',
-    version: '2.0.0',
+    version: '2.1.0',
     state: metrics.lastEventAt && Date.now() - metrics.lastEventAt < 30000 ? 'receiving' : 'waiting',
-    dataSource: 'none connected until an authorized provider is configured',
+    dataSource: rithmicStatus.connected ? 'Rithmic R|Protocol bridge' : 'none connected until an authorized provider is configured',
     ingestConfigured: Boolean(ingestToken),
     publicDistributionApproved: distributionApproved,
     publicStreaming: distributionApproved,
@@ -41,6 +43,7 @@ function status() {
     metrics,
     adapters: {
       normalizedHttp: 'ready',
+      rithmicBridge: rithmicStatus,
       cmePubSub: 'not connected; CME schema/entitlement required',
       tradingViewExtraction: 'not supported'
     }
@@ -58,6 +61,13 @@ function publish(event) {
   return true;
 }
 
+function acceptProviderEvent(event) {
+  const result = ingestMarketEvent(event, { source: 'rithmic-rprotocol', mode: 'provider' });
+  if (!result.ok || result.duplicate) return result;
+  publish(result.event);
+  return result;
+}
+
 function requirePublicDistribution(res) {
   if (distributionApproved) return true;
   res.status(403).json({
@@ -68,25 +78,20 @@ function requirePublicDistribution(res) {
   return false;
 }
 
-app.get('/health', (_req, res) => res.json({ ok: true, service: 'Northstar Live Data Engine', version: '2.0.0' }));
+app.get('/health', (_req, res) => res.json({ ok: true, service: 'Northstar Live Data Engine', version: '2.1.0' }));
 app.get('/api/status', (_req, res) => res.json(status()));
 
 app.post('/api/ingest/event', (req, res) => {
   if (!isIngestAuthorized(req)) {
     return res.status(401).json({ ok: false, error: 'Missing or invalid ingest credential' });
   }
-  const result = ingestMarketEvent(req.body);
+  const result = acceptProviderEvent(req.body);
   if (!result.ok) return res.status(422).json(result);
   if (result.duplicate) return res.status(200).json({ ok: true, duplicate: true });
-  const broadcast = publish(result.event);
   return res.status(202).json({
-    ok: true,
-    accepted: true,
-    eventId: result.event.id,
-    symbol: result.event.symbol,
-    eventType: result.event.type,
-    publicBroadcast: broadcast,
-    note: broadcast ? 'Event normalized and broadcast' : 'Event normalized and retained; public broadcast is disabled pending distribution authorization'
+    ok: true, accepted: true, eventId: result.event.id,
+    symbol: result.event.symbol, eventType: result.event.type,
+    publicBroadcast: distributionApproved
   });
 });
 
@@ -121,20 +126,33 @@ wss.on('connection', (socket, request) => {
   socket.send(JSON.stringify({ type: 'status', ...status() }));
   if (!distributionApproved) {
     socket.send(JSON.stringify({
-      type: 'notice',
-      code: 'DISTRIBUTION_NOT_APPROVED',
-      message: 'Market events are not broadcast to public WebSocket clients until the upstream provider authorizes public distribution.'
+      type: 'notice', code: 'DISTRIBUTION_NOT_APPROVED',
+      message: 'Market events are not broadcast to public WebSocket clients until the upstream provider authorizes this audience.'
     }));
   }
 });
 
+const rithmicBridgeAdapter = createRithmicBridgeAdapter({
+  httpUrl: process.env.NORTHSTAR_RITHMIC_BRIDGE_HTTP || '',
+  wsUrl: process.env.NORTHSTAR_RITHMIC_BRIDGE_WS || '',
+  onEvent: acceptProviderEvent,
+  onStatus: (next) => { rithmicStatus = next; }
+});
+
 server.listen(port, '0.0.0.0', () => {
-  console.log(`Northstar Live Data Engine v2.0.0 listening on ${port}`);
+  console.log(`Northstar Live Data Engine v2.1.0 listening on ${port}`);
   if (!ingestToken) console.warn('NORTHSTAR_INGEST_TOKEN is not configured; HTTP ingestion is disabled.');
   if (!distributionApproved) console.warn('Public market-data distribution is disabled pending provider authorization.');
+  if (process.env.NORTHSTAR_RITHMIC_BRIDGE_HTTP && process.env.NORTHSTAR_RITHMIC_BRIDGE_WS) {
+    console.log('Rithmic bridge adapter configured; connecting to the private bridge.');
+    rithmicBridgeAdapter.start();
+  } else {
+    console.log('Rithmic bridge adapter idle; no bridge URL configured.');
+  }
 });
 
 function shutdown() {
+  rithmicBridgeAdapter.stop();
   for (const client of wss.clients) client.close(1001, 'Service shutting down');
   server.close(() => process.exit(0));
 }
