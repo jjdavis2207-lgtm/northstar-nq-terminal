@@ -660,3 +660,48 @@ footer {
 .quick-tool-link:hover { color: #75e0bf; background: #12251f; }
 @media (max-width: 950px) { .risk-workspace { grid-template-columns: 1fr; } }
 @media (max-width: 620px) { .risk-input-grid, .provider-grid, .platform-grid { grid-template-columns: 1fr; } .risk-intro { align-items: flex-start; } }
+
+
+/* Dual prop-account workspace */
+.prop-page { display: flex; flex-direction: column; gap: 16px; }
+.prop-notice { display: flex; gap: 12px; padding: 15px; border: 1px solid #654b36; border-radius: 7px; background: #251f19; color: #e2c18b; }
+.prop-notice b, .prop-notice span { display: block; }
+.prop-notice b { font-size: 12px; }
+.prop-notice span { margin-top: 6px; color: #b8a98d; font-size: 11px; line-height: 1.65; }
+.prop-account-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.prop-account-card, .prop-workspace { min-width: 0; padding: 17px; background: #0e1722; border: 1px solid #253244; border-radius: 8px; }
+.prop-account-card.selected { border-color: #347d69; box-shadow: inset 0 0 0 1px #245747; }
+.prop-card-top, .prop-workspace-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.prop-overline { color: #6f8298; font-size: 9px; font-weight: 700; letter-spacing: 1.3px; }
+.prop-card-top h3, .prop-workspace-head h3 { margin: 6px 0 16px; color: #e4edf6; font-size: 17px; }
+.prop-status { display: inline-flex; align-items: center; gap: 6px; color: #e1bd7c; font-size: 9px; white-space: nowrap; }
+.prop-status i { width: 6px; height: 6px; border-radius: 50%; background: #d5a45e; }
+.prop-label { display: block; margin: 7px 0; color: #8999ac; font-size: 10px; }
+.prop-account-card input { width: 100%; padding: 10px; border: 1px solid #293749; border-radius: 5px; outline: none; color: #e7edf6; background: #0a121c; font-size: 12px; }
+.prop-account-card input:focus { border-color: #50b998; }
+.prop-meta { display: flex; justify-content: space-between; gap: 12px; padding: 11px 1px; border-bottom: 1px solid #1d2a39; color: #8999ac; font-size: 10px; }
+.prop-meta b { color: #dce6f0; font-weight: 600; }
+.prop-select { width: 100%; margin-top: 14px; padding: 10px; border: 1px solid #293749; border-radius: 5px; color: #aab8c9; background: #111c29; font-size: 11px; }
+.prop-select.active { color: #75e0bf; border-color: #286858; background: #173d37; }
+.prop-workspace-head { align-items: center; }
+.prop-workspace-head h3 { margin-bottom: 0; }
+.prop-market-switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 19px; padding: 12px; border-radius: 6px; background: #111c29; color: #8999ac; font-size: 10px; }
+.prop-market-switch div { display: flex; gap: 5px; }
+.prop-market-switch button { padding: 7px 11px; border: 0; border-radius: 4px; color: #8999ac; background: transparent; font-size: 10px; }
+.prop-market-switch button.active { color: #75e0bf; background: #173d37; }
+.prop-account-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.prop-account-stats > div { display: flex; flex-direction: column; gap: 7px; min-width: 0; padding: 14px; border: 1px solid #253244; border-radius: 6px; }
+.prop-account-stats span, .prop-account-stats small { color: #8999ac; font-size: 10px; }
+.prop-account-stats b { color: #dce6f0; font-size: 22px; }
+.prop-account-stats small { font-size: 9px; line-height: 1.4; }
+.prop-order-locked { display: flex; gap: 11px; margin-top: 13px; padding: 14px; border: 1px solid #654b36; border-radius: 6px; color: #dfbd84; background: #211f19; }
+.prop-order-locked b, .prop-order-locked span { display: block; }
+.prop-order-locked b { color: #e7d4b2; font-size: 11px; }
+.prop-order-locked span { margin-top: 5px; color: #b8a98d; font-size: 10px; line-height: 1.6; }
+.prop-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; }
+.prop-actions a { display: inline-flex; align-items: center; gap: 6px; color: #75dabb; font-size: 10px; text-decoration: none; }
+.prop-actions a:hover { text-decoration: underline; }
+.prop-security { display: flex; gap: 11px; padding: 15px; border: 1px solid #263648; border-radius: 7px; background: #101e2b; color: #70d6b5; }
+.prop-security b { color: #dce6f0; font-size: 11px; }
+.prop-security p { margin: 6px 0 0; color: #8999ac; font-size: 10px; line-height: 1.6; }
+@media (max-width: 700px) { .prop-account-grid, .prop-account-stats { grid-template-columns: 1fr; } .prop-card-top { flex-direction: column; } .prop-workspace-head { align-items: flex-start; flex-direction: column; } }
