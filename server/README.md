@@ -80,6 +80,8 @@ curl -X POST "https://YOUR-NORTHSTAR-HOST/api/market-data/ingest" \
 
 The sample values above are illustrative test payload values, not live market prices. Do not publish them to a live trading workspace.
 
+The current API keeps its recent candle cache in server memory. It is intended for live streaming and short-session chart history; a Render restart clears that cache. Durable multi-year history requires an authorized historical-data source and persistent storage.
+
 ## Important provider limitation
 
 This API is the Northstar-owned receiving layer. It does not itself grant Lucid, Tradeify, Tradovate, CQG, or CME market-data permissions. A firm-approved provider adapter and credentials/authorization are still required to publish real data. The API intentionally displays no invented prices and does not expose order-routing endpoints.
