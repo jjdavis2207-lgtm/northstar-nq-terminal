@@ -35,47 +35,59 @@ export default function LiveMarketChart({ symbol, timeframe }: Props) {
 
     let socket: WebSocket | null = null;
     let cancelled = false;
+    let reconnectTimer: number | undefined;
+    let retryDelay = 1000;
     const params = new URLSearchParams({ symbol, timeframe });
-    fetch(`/api/market-data/history?${params.toString()}`)
-      .then(async response => {
-        if (!response.ok) throw new Error(`History endpoint returned ${response.status}`);
-        return response.json();
-      })
-      .then(payload => {
-        if (cancelled) return;
-        if (Array.isArray(payload.bars)) {
-          series.setData(payload.bars.map((bar: Bar) => ({ ...bar, time: bar.time as UTCTimestamp })));
-          chart.timeScale().fitContent();
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setStatus('Waiting for authorized market-data feed');
-      });
 
-    const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    socket = new WebSocket(`${scheme}//${window.location.host}/ws/market-data?${params.toString()}`);
-    socket.onopen = () => setStatus('Connected to Northstar data service · awaiting CME ticks');
-    socket.onmessage = event => {
+    const loadHistory = async () => {
       try {
-        const message = JSON.parse(event.data) as FeedMessage;
-        if (message.type === 'status') {
-          setStatus(message.message || message.status);
-          return;
-        }
-        if (message.type === 'bar' && message.symbol === symbol && message.timeframe === timeframe && message.bar) {
-          const bar = message.bar;
-          series.update({ ...bar, time: bar.time as UTCTimestamp });
-          setLastUpdate(new Date().toLocaleTimeString());
-          setStatus('Live market data');
-        }
+        const response = await fetch(`/api/market-data/history?${params.toString()}`);
+        if (!response.ok) throw new Error(`History endpoint returned ${response.status}`);
+        const payload = await response.json();
+        if (cancelled || !Array.isArray(payload.bars)) return;
+        series.setData(payload.bars.map((bar: Bar) => ({ ...bar, time: bar.time as UTCTimestamp })));
+        chart.timeScale().fitContent();
       } catch {
-        setStatus('Received an unreadable market-data message');
+        if (!cancelled) setStatus('Waiting for authorized market-data feed');
       }
     };
-    socket.onerror = () => setStatus('Market-data service unavailable');
-    socket.onclose = () => {
-      if (!cancelled) setStatus('Disconnected · waiting for market-data service');
+
+    const connect = () => {
+      if (cancelled) return;
+      const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      socket = new WebSocket(`${scheme}//${window.location.host}/ws/market-data?${params.toString()}`);
+      socket.onopen = () => {
+        retryDelay = 1000;
+        setStatus('Connected to Northstar API · awaiting authorized feed');
+        void loadHistory();
+      };
+      socket.onmessage = event => {
+        try {
+          const message = JSON.parse(event.data) as FeedMessage;
+          if (message.type === 'status') {
+            setStatus(message.message || message.status);
+            return;
+          }
+          if (message.type === 'bar' && message.symbol === symbol && message.timeframe === timeframe && message.bar) {
+            const bar = message.bar;
+            series.update({ ...bar, time: bar.time as UTCTimestamp });
+            setLastUpdate(new Date().toLocaleTimeString());
+            setStatus('Live Northstar market data');
+          }
+        } catch {
+          setStatus('Received an unreadable market-data message');
+        }
+      };
+      socket.onerror = () => setStatus('Market-data service unavailable · reconnecting');
+      socket.onclose = () => {
+        if (cancelled) return;
+        setStatus('Disconnected · reconnecting to Northstar API');
+        reconnectTimer = window.setTimeout(connect, retryDelay);
+        retryDelay = Math.min(retryDelay * 2, 15000);
+      };
     };
+
+    connect();
 
     const resize = new ResizeObserver(entries => {
       const entry = entries[0];
@@ -85,6 +97,7 @@ export default function LiveMarketChart({ symbol, timeframe }: Props) {
 
     return () => {
       cancelled = true;
+      if (reconnectTimer !== undefined) window.clearTimeout(reconnectTimer);
       resize.disconnect();
       socket?.close();
       chart.remove();
@@ -95,7 +108,7 @@ export default function LiveMarketChart({ symbol, timeframe }: Props) {
 
   return (
     <div className="live-chart-wrap">
-      <div className="live-chart-status"><span className={status === 'Live market data' ? 'live-dot' : 'waiting-dot'} />{status}<small>{lastUpdate ? `Last update ${lastUpdate}` : 'No prices are displayed until real data arrives'}</small></div>
+      <div className="live-chart-status"><span className={status === 'Live Northstar market data' ? 'live-dot' : 'waiting-dot'} />{status}<small>{lastUpdate ? `Last update ${lastUpdate}` : 'No prices are displayed until an authorized feed arrives'}</small></div>
       <div className="live-chart-host" ref={hostRef} />
     </div>
   );
