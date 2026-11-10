@@ -75,9 +75,10 @@ export default function TradingViewChart({ symbol, timeframe }: Props) {
 
   return (
     <div className="tradingview-chart-shell">
-      <div className="tradingview-chart-host" ref={hostRef} />
+      <div className="tradingview-widget-container tradingview-chart-host" ref={hostRef} />
       <div className="tradingview-data-note">
-        TradingView market feed · Real-time availability depends on your TradingView and CME data entitlements. This chart does not sign in to or connect your Lucid/Tradeify account.
+        TradingView embedded chart · CME real-time data subscriptions do not carry over to embedded widgets, so CME quotes may be delayed. This embed does not connect your Lucid/Tradeify account.
+        {' '}<a href={`https://www.tradingview.com/chart/?symbol=CME_MINI:${symbol}1!`} target="_blank" rel="noopener noreferrer">Open full TradingView for your account data</a>.
       </div>
     </div>
   );
