@@ -82,7 +82,7 @@ export default function PropAccounts() {
           <div className="prop-setup-title"><CheckCircle2 size={17} /><b>Step 2 · Confirm your CME market-data agreement</b></div>
           <p>On first Tradovate login, complete the applicable CME Non-Professional Data Agreement if prompted. Tradeify states that Level 1 CME data is included for Tradovate accounts; Level 2 depth is a separate add-on.</p>
           <div className="prop-setup-title pending"><LockKeyhole size={17} /><b>Step 3 · Authorize a Northstar-compatible feed</b></div>
-          <p>This is the remaining blocker. Direct Tradovate API access requires an eligible live brokerage account and API subscription; prop/evaluation accounts are not eligible under Tradovate's published requirements. We need a firm-approved third-party API/data integration before Northstar can receive account data or route orders.</p>
+          <p>This is the remaining blocker. Tradovate's published API requirements call for a live brokerage account with more than $1,000 equity, an API Access subscription, and an API key. Your prop-firm Tradovate login does not automatically provide Northstar with those API credentials or permission. We need a separate firm-approved provider integration before Northstar can receive account data or route orders.</p>
         </div>
 
         <div className="prop-order-locked">
