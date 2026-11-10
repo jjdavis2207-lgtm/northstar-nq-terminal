@@ -843,3 +843,28 @@ footer {
 .marketlab-parameters input { width:70px; padding:7px; border:1px solid #293749; border-radius:5px; color:#e7edf6; background:#0a121c; }
 .marketlab-range { width:100%; accent-color:#50d4a8; }
 @media(max-width:650px) { .marketlab-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .marketlab-import { align-items:flex-start; flex-direction:column; } }
+
+
+/* Deep Flow analytics panels */
+.deepflow-metrics-secondary { margin-top:-7px; }
+.deepflow-metrics-secondary > div { padding:11px 13px; }
+.deepflow-metrics-secondary b { font-size:15px; }
+.deepflow-metrics b small { display:inline; color:#8294a9; font-size:9px; font-weight:500; }
+.deepflow-controls { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:9px; padding:9px 12px; border-bottom:1px solid #26374a; color:#91a2b6; font-size:9px; }
+.deepflow-controls label { display:flex; align-items:center; gap:7px; }
+.deepflow-controls input { accent-color:#45c49a; }
+.deepflow-controls select { margin:0 4px; padding:4px 7px; border:1px solid #2a3b4e; border-radius:4px; color:#dce6f0; background:#111e2c; font-size:10px; }
+.footprint-row.ask-imbalance .ask-volume { background:rgba(44,190,140,.24); font-weight:800; }
+.footprint-row.bid-imbalance .bid-volume { background:rgba(220,85,95,.24); font-weight:800; }
+.profile-list { display:flex; flex-direction:column; gap:7px; padding:12px; }
+.profile-row { display:grid; grid-template-columns:75px minmax(0,1fr) 54px; align-items:center; gap:9px; color:#a9b7c7; font-size:9px; font-variant-numeric:tabular-nums; }
+.profile-row b { text-align:right; color:#dce6f0; font-weight:600; }
+.profile-track { height:10px; overflow:hidden; border-radius:2px; background:#172535; }
+.profile-track i { display:block; height:100%; border-radius:2px; background:linear-gradient(90deg,#287f72,#4ac69d); }
+.deepflow-depth-totals { display:flex; justify-content:space-around; gap:10px; padding:10px; border-top:1px solid #26374a; color:#8496aa; font-size:10px; }
+.deepflow-depth-totals b { margin-left:5px; font-variant-numeric:tabular-nums; }
+.large-trades { min-height:180px; }
+.large-trade-row { display:grid; grid-template-columns:1.15fr .8fr 1fr .65fr; align-items:center; gap:5px; min-height:29px; padding:0 9px; border-bottom:1px solid rgba(39,56,75,.55); color:#aebdce; font-size:9px; font-variant-numeric:tabular-nums; text-align:center; }
+.large-trade-row b { color:#dce6f0; }
+.large-trade-header { color:#7f91a6; background:#111e2c; font-size:8px; letter-spacing:.04em; }
+@media(max-width:600px) { .deepflow-metrics-secondary { margin-top:-7px; } .deepflow-controls { align-items:flex-start; flex-direction:column; } .profile-row { grid-template-columns:65px minmax(0,1fr) 45px; } }
