@@ -1,0 +1,27 @@
+name: Northstar Live Data Engine checks
+
+on:
+  push:
+    branches:
+      - northstar-live-data-engine
+    paths:
+      - "live-data-engine/**"
+      - ".github/workflows/northstar-live-data-engine.yml"
+  pull_request:
+    paths:
+      - "live-data-engine/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: live-data-engine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run check
+      - run: npm test
