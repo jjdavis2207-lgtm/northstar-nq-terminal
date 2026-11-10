@@ -715,3 +715,13 @@ footer {
 .live-dot, .waiting-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #35bd91; }
 .waiting-dot { background: #d5a45e; }
 @media (max-width: 620px) { .live-chart-wrap { height: 340px; } .live-chart-status { flex-wrap: wrap; } .live-chart-status small { width: 100%; margin-left: 14px; } }
+
+
+/* Secure prop-account connection onboarding */
+.prop-setup { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; padding: 15px; border: 1px solid #253244; border-radius: 7px; background: #0b141f; }
+.prop-setup-title { display: flex; align-items: center; gap: 8px; margin-top: 4px; color: #75dabb; }
+.prop-setup-title b { color: #dce6f0; font-size: 11px; }
+.prop-setup-title.pending { color: #dfbd84; }
+.prop-setup p { margin: 0 0 5px 25px; color: #8999ac; font-size: 10px; line-height: 1.65; }
+.prop-connect-link { display: inline-flex; align-items: center; align-self: flex-start; gap: 7px; margin: 0 0 8px 25px; padding: 9px 12px; border: 1px solid #286858; border-radius: 5px; color: #75e0bf; background: #173d37; font-size: 10px; text-decoration: none; }
+.prop-connect-link:hover { background: #1c4a40; }
