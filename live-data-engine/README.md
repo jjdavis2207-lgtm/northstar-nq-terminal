@@ -1,52 +1,110 @@
 # Northstar Live Data Engine
 
-A separate Node.js service for Northstar, designed to run alongside the existing Northstar terminal as its own Render Web Service.
+A separate, provider-neutral NQ/MNQ market processing service. It runs independently from the main Northstar terminal.
 
-## Selected data architecture
+## What is implemented
 
-Target architecture: **CME Group Data Services SBE real-time via Google Cloud Pub/Sub**. CME documents SBE as supporting Market-by-Order (MBO) or 10-level Market Depth for futures. CME's JSON Pub/Sub feed is easier to integrate but provides only top-of-book or up to 2 price levels. The current service code is only a guarded JSON-message gateway; it does not yet decode CME SBE binary messages or fully map CME JSON fields into trades/books. Therefore it is not yet a working full-depth market-data adapter.
+- Authenticated HTTP ingestion for normalized trade and quote events
+- NQ/MNQ symbol normalization and 0.25-point tick validation
+- Trade ID deduplication
+- In-memory rolling trade history (up to 50,000 trades per symbol)
+- UTC-aligned 1-minute, 5-minute, and 15-minute OHLCV candles
+- Latest trade/quote snapshots
+- REST replay and candle endpoints
+- Symbol-filtered WebSocket broadcasting
+- Health/status metrics and input validation
+- Automated Node.js tests for normalization, candle generation, quote validation, and deduplication
 
-Official entry points:
-- https://dataservices.cmegroup.com/pages/home
-- https://www.cmegroup.com/market-data/real-time-futures-and-options-data-api.html
+This is a processing engine. It does not create prices, generate exchange transactions, or include a market-data subscription.
 
 ## Render deployment
 
-Create a second Render Web Service from the same GitHub repository:
-
+- Repository: `jjdavis2207-lgtm/northstar-nq-terminal`
 - Branch: `northstar-live-data-engine`
 - Root Directory: `live-data-engine`
 - Build Command: `npm install`
 - Start Command: `npm start`
 
-The existing Northstar service remains on its current branch/service and is not replaced by this service.
+The main Northstar website/service is not modified by this branch.
 
-## Required environment
+## Render environment variables
 
-- `GOOGLE_CLOUD_PROJECT`: Google Cloud project ID receiving the CME Pub/Sub feed.
-- `CME_PUBSUB_SUBSCRIPTION`: Pub/Sub subscription name provisioned for the CME data product.
-- `GOOGLE_APPLICATION_CREDENTIALS`: path to a Google service-account credential file, or configure Render's supported secret-file mechanism / workload identity. Never commit credentials.
-- `PUBLIC_LIVE_DISTRIBUTION_APPROVED`: leave `false` until CME confirms in writing that Northstar may redistribute the selected live data and derived displays to its intended public audience. Set to `true` only after approval.
-- `TRADINGVIEW_WEBHOOK_TOKEN`: a long random secret used to protect the TradingView alert-ingest URL. Add it as a Render environment variable; do not put it in public code.
+Required to enable ingestion:
 
-## Endpoints
+- `NORTHSTAR_INGEST_TOKEN`: a long random secret. Send it as `Authorization: Bearer <token>` or `x-api-key: <token>`. Do not put it in browser code or commit it to GitHub.
+
+Required before public market-data output:
+
+- `PUBLIC_LIVE_DISTRIBUTION_APPROVED=true`: leave unset/false until the upstream data provider explicitly authorizes Northstar's intended public distribution. This controls public REST market endpoints and WebSocket broadcasts.
+
+No provider credentials, paid service, or CME entitlement are included or created by this code.
+
+## Ingestion contract
+
+Endpoint: `POST /api/ingest/event`
+
+Headers:
+- `Content-Type: application/json`
+- `Authorization: Bearer YOUR_NORTHSTAR_INGEST_TOKEN`
+
+Trade example:
+```json
+{
+  "id": "provider-trade-unique-id",
+  "type": "trade",
+  "symbol": "MNQ",
+  "timestamp": 1794321000000,
+  "price": 25000.25,
+  "quantity": 2,
+  "side": "buy",
+  "source": "authorized-provider-name"
+}
+```
+
+Quote example:
+```json
+{
+  "id": "provider-quote-unique-id",
+  "type": "quote",
+  "symbol": "NQ",
+  "timestamp": 1794321000000,
+  "bid": 25000.00,
+  "ask": 25000.25,
+  "bidSize": 12,
+  "askSize": 8,
+  "source": "authorized-provider-name"
+}
+```
+
+A successful ingest returns HTTP 202. A duplicate trade ID is ignored. Prices must align to the 0.25-point NQ/MNQ tick. Quote events require a valid non-crossed bid/ask. Timestamps may be ISO strings, Unix seconds, or Unix milliseconds.
+
+## Read endpoints
 
 - `GET /health`
 - `GET /api/status`
-- `POST /api/ingest/tradingview/:token` — receives TradingView alert JSON when the matching `TRADINGVIEW_WEBHOOK_TOKEN` is configured.
-- `GET /api/replay?symbol=NQ&limit=500` — returns the most recent in-memory TradingView alert events (up to 5,000 retained per running process).
-- `WS /ws?symbol=NQ`
-- `WS /ws?symbol=MNQ`
+- `GET /api/market/NQ` or `GET /api/market/MNQ`
+- `GET /api/candles/NQ?interval=1m&limit=500`
+- `GET /api/candles/MNQ?interval=5m&limit=500`
+- `GET /api/replay/NQ?limit=500`
+- `GET /api/replay/MNQ?limit=500`
+- WebSocket: `/ws?symbol=NQ` or `/ws?symbol=MNQ`
 
-The TradingView bridge accepts alert JSON with `symbol` or `ticker`, plus optional `event`/`signal`, `time`/`timestamp`, `timeframe`/`interval`, `price`, OHLC, and `volume` fields. Example alert body: `{"symbol":"CME_MINI:MNQ1!","event":"breakout","timeframe":"1","price":21000.25,"close":21000.25}`. It stores up to 5,000 events in process memory, broadcasts them to connected WebSocket clients, and exposes them through `/api/replay`. Memory is cleared when the service restarts or redeploys.
+The read endpoints and WebSocket broadcasting return/stream market data only when `PUBLIC_LIVE_DISTRIBUTION_APPROVED=true`. Health and status remain readable.
 
-**Important:** TradingView webhooks send only alerts that a user configures in TradingView. They do not export the full underlying quote/tick stream, CME trades, or DOM. This bridge can power signal/event replay and analytics, but it is not a replacement for a real-time exchange feed. TradingView webhook delivery can fail occasionally, so monitor TradingView's alert log. CME's actual Pub/Sub schema and the provisioned topic format must be confirmed before writing full trade, MBO, footprint, or DOM decoders. It deliberately does not fabricate price, aggressor side, order IDs, depth, or timestamps.
+## Important limitations
 
-## Current limitations and verification status
+- No live data provider is connected by default. `/api/status` reports `dataSource: none connected` until an authorized provider is integrated.
+- Ingestion data and replay history are in memory and reset on restart/redeploy. This is not durable historical storage.
+- Candle intervals are UTC-aligned. They are not yet exchange-session-aware and do not implement settlement, rollover, or holiday calendars.
+- This version does not calculate aggressor side from quotes, footprint/delta, MBO, DOM, heatmaps, or institutional order-flow metrics. Those require the corresponding raw provider fields and a verified decoder.
+- CME Pub/Sub/SBE is not connected in this version. Its entitlement, schema mapping, decoder, cloud subscription, and distribution approval must be completed against the actual CME product.
+- TradingView's private feed is not extracted or scraped. TradingView alert messages are not a substitute for a complete exchange tick/order-book feed.
+- No synthetic or sample prices are emitted as live market data.
 
-- The Node service and WebSocket gateway are scaffolding, not a completed CME adapter.
-- The current subscriber path expects JSON messages and only performs generic symbol detection. It does not yet implement the CME JSON message schema's field-level trade/book decoding.
-- SBE is the intended full-depth/MBO target. The service now refuses to subscribe when `CME_FEED_FORMAT=SBE` because the SBE decoder is not implemented; this prevents binary SBE payloads from being misread as JSON and silently discarded.
-- Do not enable public broadcasting until CME has approved the public distribution model and the subscriber authentication/entitlement layer is implemented.
-- No CME entitlement, Google Cloud subscription, service-account credentials, or redistribution rights are created by this repository.
-- Static syntax/dependency validation and a live Pub/Sub integration test have not yet been completed in this environment.
+## Local checks
+
+```bash
+npm install
+npm run check
+npm test
+```
