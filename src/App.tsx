@@ -1,5 +1,7 @@
 
 import { useState } from 'react';
+import RiskManager from './RiskManager';
+import DataConnections from './DataConnections';
 import {
   Activity,
   BarChart3,
@@ -365,13 +367,17 @@ function App() {
 
                   <div className="side-panel">
                     <div className="side-head"><b>QUICK TOOLS</b></div>
-                    <div className="simple-empty">
-                      Risk calculator and trade planning tools will be available here.
-                    </div>
+                    <button className="simple-empty quick-tool-link" onClick={() => setActivePage('Risk Manager')}>
+                      Open the NQ / MNQ risk calculator →
+                    </button>
                   </div>
                 </div>
               </div>
             </>
+          ) : activePage === 'Risk Manager' ? (
+            <RiskManager />
+          ) : activePage === 'Data Connections' ? (
+            <DataConnections />
           ) : (
             <div className="module-page">
               <div className="module-hero">
