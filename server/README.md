@@ -18,6 +18,37 @@ Set these environment variables in Render's private Environment settings:
 
 Do not add API keys or tokens to GitHub. A Render service configured with a different start command will continue to run the old process until its Start Command is changed.
 
+## Independent live CME feed (Databento)
+
+Northstar includes an optional Databento worker so the terminal can receive CME data without logging in to Lucid or Tradeify. The worker subscribes to the CME Globex MDP 3.0 dataset using parent symbols for NQ and MNQ, requests MBP-10 market depth plus definitions, and publishes normalized trade/depth events into Northstar.
+
+### Create a Render Background Worker
+
+Create a **Background Worker** from this same GitHub repository (leave the existing Northstar Web Service in place):
+
+- Runtime: Python
+- Build command: `pip install -r requirements.txt`
+- Start command: `python server/databento_feed.py`
+
+Set these private environment variables on the Background Worker:
+
+- `DATABENTO_API_KEY` — your Databento API key
+- `NORTHSTAR_API_URL` — `https://northstar-nq-terminal-uo6z.onrender.com`
+- `NORTHSTAR_INGEST_TOKEN` — exactly the same secret configured on the Northstar Web Service
+- `DATABENTO_DATASET` — `GLBX.MDP3`
+- `DATABENTO_SCHEMA` — `mbp-10`
+- `DATABENTO_SYMBOLS` — `NQ.FUT,MNQ.FUT`
+
+On the existing Northstar Web Service, also set `NORTHSTAR_INGEST_TOKEN` and `NORTHSTAR_ALLOWED_ORIGINS` as described above. Keep the Databento key only on the Background Worker; never add it to Vite/React variables or GitHub.
+
+The worker uses Databento definition records to map changing front-month instrument IDs to NQ/MNQ. It forwards trade prints (with exchange aggressor side) and top-ten aggregated book levels. Northstar then displays them in the Deep Flow workspace.
+
+### Data subscription and licensing
+
+Databento currently lists its Standard plan at $199/month. Its pricing page lists live CME data and personal-use licensing for up to two devices with license fees included on Standard; confirm that your account's CME entitlement explicitly includes the live MBP-10 schema before relying on the Level II panel. The $125 new-account credits are for historical data, not a free live feed. If you plan to display or redistribute live data to students or other users, obtain the appropriate external-distribution rights first; Standard personal-use access is not a student redistribution license.
+
+References: https://databento.com/pricing/ and https://databento.com/docs/api-live
+
 ## Run locally
 
 ```bash
