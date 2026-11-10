@@ -4,7 +4,7 @@ A separate Node.js service for Northstar, designed to run alongside the existing
 
 ## Selected data architecture
 
-Primary target: **CME Group Data Services real-time data through Google Cloud Pub/Sub**. CME documents this service as supporting trades and up to the full order book. This is the preferred architecture for advanced NQ/MNQ order-flow work, rather than the simpler CME WebSocket API's one-deep top-of-book feed.
+Target architecture: **CME Group Data Services SBE real-time via Google Cloud Pub/Sub**. CME documents SBE as supporting Market-by-Order (MBO) or 10-level Market Depth for futures. CME's JSON Pub/Sub feed is easier to integrate but provides only top-of-book or up to 2 price levels. The current service code is only a guarded JSON-message gateway; it does not yet decode CME SBE binary messages or fully map CME JSON fields into trades/books. Therefore it is not yet a working full-depth market-data adapter.
 
 Official entry points:
 - https://dataservices.cmegroup.com/pages/home
@@ -37,6 +37,11 @@ The existing Northstar service remains on its current branch/service and is not 
 
 The service preserves the original JSON message payload. CME's actual Pub/Sub schema and the provisioned topic format must be confirmed against the specific data product before writing final field-level trade, MBO, footprint, or DOM decoders. It deliberately does not fabricate price, aggressor side, order IDs, depth, or timestamps.
 
-## Current limitations
+## Current limitations and verification status
 
-This is the independent service scaffold and Pub/Sub subscriber. It does not create CME entitlements, a Google Cloud subscription, API credentials, or redistribution rights. Until those are provisioned, the service reports that it is waiting and does not claim to be live. Public WebSocket broadcasting is disabled by default.
+- The Node service and WebSocket gateway are scaffolding, not a completed CME adapter.
+- The current subscriber path expects JSON messages and only performs generic symbol detection. It does not yet implement the CME JSON message schema's field-level trade/book decoding.
+- SBE is the intended full-depth/MBO target. The service now refuses to subscribe when `CME_FEED_FORMAT=SBE` because the SBE decoder is not implemented; this prevents binary SBE payloads from being misread as JSON and silently discarded.
+- Do not enable public broadcasting until CME has approved the public distribution model and the subscriber authentication/entitlement layer is implemented.
+- No CME entitlement, Google Cloud subscription, service-account credentials, or redistribution rights are created by this repository.
+- Static syntax/dependency validation and a live Pub/Sub integration test have not yet been completed in this environment.
