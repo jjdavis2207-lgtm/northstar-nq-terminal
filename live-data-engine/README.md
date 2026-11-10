@@ -27,15 +27,20 @@ The existing Northstar service remains on its current branch/service and is not 
 - `CME_PUBSUB_SUBSCRIPTION`: Pub/Sub subscription name provisioned for the CME data product.
 - `GOOGLE_APPLICATION_CREDENTIALS`: path to a Google service-account credential file, or configure Render's supported secret-file mechanism / workload identity. Never commit credentials.
 - `PUBLIC_LIVE_DISTRIBUTION_APPROVED`: leave `false` until CME confirms in writing that Northstar may redistribute the selected live data and derived displays to its intended public audience. Set to `true` only after approval.
+- `TRADINGVIEW_WEBHOOK_TOKEN`: a long random secret used to protect the TradingView alert-ingest URL. Add it as a Render environment variable; do not put it in public code.
 
 ## Endpoints
 
 - `GET /health`
 - `GET /api/status`
+- `POST /api/ingest/tradingview/:token` — receives TradingView alert JSON when the matching `TRADINGVIEW_WEBHOOK_TOKEN` is configured.
+- `GET /api/replay?symbol=NQ&limit=500` — returns the most recent in-memory TradingView alert events (up to 5,000 retained per running process).
 - `WS /ws?symbol=NQ`
 - `WS /ws?symbol=MNQ`
 
-The service preserves the original JSON message payload. CME's actual Pub/Sub schema and the provisioned topic format must be confirmed against the specific data product before writing final field-level trade, MBO, footprint, or DOM decoders. It deliberately does not fabricate price, aggressor side, order IDs, depth, or timestamps.
+The TradingView bridge accepts alert JSON with `symbol` or `ticker`, plus optional `event`/`signal`, `time`/`timestamp`, `timeframe`/`interval`, `price`, OHLC, and `volume` fields. Example alert body: `{"symbol":"CME_MINI:MNQ1!","event":"breakout","timeframe":"1","price":21000.25,"close":21000.25}`. It stores up to 5,000 events in process memory, broadcasts them to connected WebSocket clients, and exposes them through `/api/replay`. Memory is cleared when the service restarts or redeploys.
+
+**Important:** TradingView webhooks send only alerts that a user configures in TradingView. They do not export the full underlying quote/tick stream, CME trades, or DOM. This bridge can power signal/event replay and analytics, but it is not a replacement for a real-time exchange feed. TradingView webhook delivery can fail occasionally, so monitor TradingView's alert log. CME's actual Pub/Sub schema and the provisioned topic format must be confirmed before writing full trade, MBO, footprint, or DOM decoders. It deliberately does not fabricate price, aggressor side, order IDs, depth, or timestamps.
 
 ## Current limitations and verification status
 
