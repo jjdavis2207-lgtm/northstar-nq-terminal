@@ -1,27 +1,98 @@
-import { ExternalLink, ShieldCheck, WifiOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ExternalLink, ShieldCheck, WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react';
+
+type FeedStatus = {
+  connected: boolean;
+  provider: string;
+  lastUpdate: number | null;
+  message: string;
+};
+
+const initialStatus: FeedStatus = {
+  connected: false,
+  provider: 'No provider configured',
+  lastUpdate: null,
+  message: 'Checking Northstar API'
+};
 
 export default function DataConnections() {
+  const [status, setStatus] = useState<FeedStatus>(initialStatus);
+  const [checking, setChecking] = useState(false);
+
+  const refresh = async () => {
+    setChecking(true);
+    try {
+      const response = await fetch('/api/market-data/status', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Northstar API returned an error');
+      setStatus(await response.json());
+    } catch {
+      setStatus({
+        connected: false,
+        provider: 'Northstar API unavailable',
+        lastUpdate: null,
+        message: 'The Northstar server could not be reached. Check the Render service.'
+      });
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 15000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const lastUpdate = status.lastUpdate
+    ? new Date(status.lastUpdate).toLocaleString()
+    : 'No feed update received';
+
   return (
     <div className="connections-page">
       <div className="module-hero">
         <div className="module-symbol"><ShieldCheck size={24} /></div>
         <div><div className="eyebrow">NORTHSTAR / INTEGRATIONS</div><h2>Data Connections</h2>
-          <p>Connect an independent CME market-data feed directly to Northstar.</p></div>
+          <p>Monitor the Northstar feed and use your existing charting accounts without adding a paid data vendor.</p></div>
       </div>
       <div className="connection-alert">
-        <WifiOff size={19} />
-        <div><b>Live data is not connected</b><span>Northstar now includes a server-side API and live WebSocket chart feed receiver. Northstar now has an independent Databento feed worker path. It is not connected until a licensed Databento API key is configured on a Render Background Worker. TradingView's embedded chart is separate and may show delayed CME quotes.</span></div>
+        {status.connected ? <CheckCircle2 size={19} /> : <WifiOff size={19} />}
+        <div>
+          <b>{status.connected ? 'Authorized market-data feed is active' : 'Northstar market data is not connected'}</b>
+          <span>{status.message}. This status is checked against your Northstar server every 15 seconds; an open TradingView chart is not mistaken for a Northstar data connection.</span>
+        </div>
       </div>
-      <h3 className="connection-section-title">Independent live market data</h3>
+      <h3 className="connection-section-title">Northstar feed status</h3>
       <div className="provider-grid">
-        <article className="provider-card"><div className="provider-card-head"><b>Databento · CME Globex</b><span>Ready for setup</span></div><p>Independent market data for NQ and MNQ. Northstar's new background worker subscribes to CME trades and MBP-10 market depth, then streams the events into the original Deep Flow footprint and Level II workspace. No Lucid or Tradeify login is needed.</p><small>Feed: GLBX.MDP3 · NQ.FUT / MNQ.FUT · MBP-10</small><a href="https://databento.com/pricing/" target="_blank" rel="noreferrer">View plans and CME licensing <ExternalLink size={13}/></a><a href="https://databento.com/docs/api-live" target="_blank" rel="noreferrer">Live API documentation <ExternalLink size={13}/></a></article>
+        <article className="provider-card">
+          <div className="provider-card-head"><b>Northstar market-data receiver</b><span>{status.connected ? 'CONNECTED' : 'DISCONNECTED'}</span></div>
+          <p>The app can receive authorized NQ and MNQ candles, trades, and order-book updates through its secure server endpoints. A real provider must publish the data; this receiver does not generate prices.</p>
+          <small>Provider: {status.provider}<br />Last update: {lastUpdate}</small>
+          <button className="toolbtn" onClick={() => void refresh()} disabled={checking}><RefreshCw size={13} /> {checking ? 'Checking…' : 'Check connection'}</button>
+        </article>
+        <article className="provider-card">
+          <div className="provider-card-head"><b>Free-use setup</b><span>NO NEW SUBSCRIPTION</span></div>
+          <p>Keep using the TradingView chart embed for chart viewing. Its market data stays inside TradingView and is not copied into Northstar. Authorized historical NQ/MNQ CSV files can be used for offline analysis once an import workflow is implemented.</p>
+          <small>Northstar symbols: NQ · MNQ</small>
+          <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">Open TradingView <ExternalLink size={13}/></a>
+        </article>
       </div>
-      <h3 className="connection-section-title">Charting</h3>
+      <h3 className="connection-section-title">Existing trading platforms</h3>
       <div className="platform-grid">
-        <article className="platform-card"><b>Northstar Deep Flow</b><p>Original Northstar code for footprint bid/ask volume, exchange aggressor delta, and ten-level aggregated market depth. It requires an authorized live MBP-10 feed to populate; no sample prices or fabricated volume are displayed.</p><a href="https://github.com/jjdavis2207-lgtm/northstar-nq-terminal/blob/main/server/databento_feed.py" target="_blank" rel="noreferrer">View the Databento bridge <ExternalLink size={13}/></a></article>
-        <article className="platform-card"><b>TradingView embed</b><p>The embedded chart uses TradingView's hosted feed and does not expose data to Northstar. CME exchange subscriptions do not carry over to embedded widgets, so quotes may be delayed. Use Northstar Deep Flow for the independent feed once configured.</p><a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">Open TradingView <ExternalLink size={13}/></a><a href="https://www.tradingview.com/support/solutions/43000471705-how-to-purchase-additional-market-data/" target="_blank" rel="noreferrer">CME data requirements <ExternalLink size={13}/></a></article>
+        <article className="platform-card">
+          <b>TradingView</b>
+          <p>Use your existing TradingView account and supported chart access. The embedded widget is hosted by TradingView; Northstar cannot read its private live data stream or broker session.</p>
+          <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">Open TradingView <ExternalLink size={13}/></a>
+        </article>
+        <article className="platform-card">
+          <b>Tradovate · Lucid · Tradeify</b>
+          <p>Your prop-firm login remains separate from Northstar. Tradovate's API add-on is not a free shortcut to live CME data, and current official requirements exclude prop-firm/evaluation accounts. No credentials are requested or stored here.</p>
+          <a href="https://api.tradovate.com/" target="_blank" rel="noreferrer">Official Tradovate API docs <ExternalLink size={13}/></a>
+        </article>
       </div>
-      <div className="connection-security"><ShieldCheck size={18}/><div><b>Security requirement</b><p>Do not paste API keys, passwords, or account tokens into this page or a public GitHub file. Store the Databento API key and Northstar ingest token only as private environment variables on the Render Background Worker and Web Service. Never put them in the browser or GitHub.</p></div></div>
+      <div className="connection-security">
+        <ShieldCheck size={18}/>
+        <div><b>Security and cost protection</b><p>No Databento worker is required or enabled by this screen. Do not paste API keys, passwords, or prop-firm credentials into GitHub or this page. Northstar only reports a live connection when its server has actually received a recent authorized data update.</p></div>
+      </div>
     </div>
   );
 }
