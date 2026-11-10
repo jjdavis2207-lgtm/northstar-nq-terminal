@@ -9,6 +9,7 @@ const wss = new WebSocketServer({ server, path: '/ws' });
 const port = Number(process.env.PORT || 8788);
 const projectId = process.env.GOOGLE_CLOUD_PROJECT || '';
 const subscriptionName = process.env.CME_PUBSUB_SUBSCRIPTION || '';
+const feedFormat = String(process.env.CME_FEED_FORMAT || 'JSON').toUpperCase();
 const distributionApproved = process.env.PUBLIC_LIVE_DISTRIBUTION_APPROVED === 'true';
 const providerLabel = 'CME Group Data Services · Google Cloud Pub/Sub';
 
@@ -24,6 +25,8 @@ function status() {
     service: 'Northstar Live Data Engine',
     provider: providerLabel,
     transport: 'Google Cloud Pub/Sub',
+    feedFormat,
+    decoder: feedFormat === 'JSON' ? 'JSON envelope inspection only; CME field mapping still required' : 'SBE decoder not installed',
     state: lastMessageAt && Date.now() - lastMessageAt < 30000 ? 'receiving' : 'waiting',
     distributionApproved,
     publicStreaming: distributionApproved,
@@ -114,7 +117,10 @@ wss.on('connection', (socket, request) => {
 });
 
 async function start() {
-  if (projectId && subscriptionName) {
+  if (projectId && subscriptionName && feedFormat !== 'JSON') {
+    lastError = 'This build only accepts CME JSON Pub/Sub messages. SBE full-depth/MBO requires the CME SBE schema decoder before subscribing.';
+    console.error(lastError);
+  } else if (projectId && subscriptionName) {
     const pubsub = new PubSub({ projectId });
     subscriber = pubsub.subscription(subscriptionName, {
       flowControl: { maxMessages: 100, allowExcessMessages: false }
