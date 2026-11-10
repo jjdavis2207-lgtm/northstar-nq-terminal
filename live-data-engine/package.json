@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/market-engine.js",
+    "check": "node --check src/server.js && node --check src/market-engine.js && node --check src/adapters/rithmic-bridge.js",
     "test": "node --test"
   },
   "dependencies": {
