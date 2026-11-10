@@ -705,3 +705,13 @@ footer {
 .prop-security b { color: #dce6f0; font-size: 11px; }
 .prop-security p { margin: 6px 0 0; color: #8999ac; font-size: 10px; line-height: 1.6; }
 @media (max-width: 700px) { .prop-account-grid, .prop-account-stats { grid-template-columns: 1fr; } .prop-card-top { flex-direction: column; } .prop-workspace-head { align-items: flex-start; flex-direction: column; } }
+
+
+/* Live market chart */
+.live-chart-wrap { position: relative; height: 410px; background: #0b131e; }
+.live-chart-host { position: absolute; inset: 0; }
+.live-chart-status { position: absolute; z-index: 2; top: 10px; left: 12px; display: flex; align-items: center; gap: 7px; max-width: calc(100% - 24px); padding: 6px 8px; border: 1px solid #263648; border-radius: 4px; background: rgba(9,17,27,.88); color: #a6b4c4; font-size: 9px; pointer-events: none; }
+.live-chart-status small { margin-left: 5px; color: #718298; }
+.live-dot, .waiting-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #35bd91; }
+.waiting-dot { background: #d5a45e; }
+@media (max-width: 620px) { .live-chart-wrap { height: 340px; } .live-chart-status { flex-wrap: wrap; } .live-chart-status small { width: 100%; margin-left: 14px; } }
