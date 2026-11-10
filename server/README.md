@@ -2,6 +2,22 @@
 
 Northstar runs its own Node API alongside the Vite-built app.
 
+## Deploy on Render
+
+Use the existing Northstar Render service as a **Web Service** (not a Static Site):
+
+- Build command: `npm install && npm run build`
+- Start command: `npm start`
+- Health check path: `/api/health`
+
+Set these environment variables in Render's private Environment settings:
+
+- `NORTHSTAR_INGEST_TOKEN` — a long random secret shared only with an authorized feed publisher.
+- `NORTHSTAR_ALLOWED_ORIGINS` — `https://northstar-nq-terminal-uo6z.onrender.com`
+- `NORTHSTAR_MARKET_DATA_PROVIDER` — optional descriptive provider label.
+
+Do not add API keys or tokens to GitHub. A Render service configured with a different start command will continue to run the old process until its Start Command is changed.
+
 ## Run locally
 
 ```bash
