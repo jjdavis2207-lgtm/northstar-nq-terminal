@@ -25,8 +25,9 @@ function number(value) {
 
 function normalizeSymbol(value) {
   const symbol = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (symbol.startsWith('MNQ')) return 'MNQ';
-  if (symbol.startsWith('NQ')) return 'NQ';
+  // Provider symbols may be exchange-prefixed, e.g. CME_MINI:MNQH6.
+  if (symbol.includes('MNQ')) return 'MNQ';
+  if (symbol.includes('NQ')) return 'NQ';
   return null;
 }
 
