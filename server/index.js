@@ -14,6 +14,7 @@ const STALE_AFTER_MS = 30_000;
 const MAX_BARS_PER_SERIES = 5_000;
 const validSymbols = new Set(['NQ', 'MNQ']);
 const validTimeframes = new Set(['1m', '2m', '5m', '15m', '30m', '1H', '4H', '1D']);
+const timeframeMs = { '1m': 60_000, '2m': 120_000, '5m': 300_000, '15m': 900_000, '30m': 1_800_000, '1H': 3_600_000, '4H': 14_400_000, '1D': 86_400_000 };
 const history = new Map();
 let lastIngestAt = 0;
 let providerName = process.env.NORTHSTAR_MARKET_DATA_PROVIDER || 'No provider configured';
@@ -103,8 +104,15 @@ app.get('/api/market-data/history', (req, res) => {
     return res.status(400).json({ error: 'Unsupported symbol or timeframe' });
   }
   const key = `${symbol}:${timeframe}`;
+  const from = Number(req.query.from);
+  const to = Number(req.query.to);
+  const countBack = Math.min(Math.max(Number(req.query.countBack) || MAX_BARS_PER_SERIES, 1), MAX_BARS_PER_SERIES);
+  let bars = history.get(key) || [];
+  if (Number.isFinite(from) && from > 0) bars = bars.filter(bar => bar.time >= from);
+  if (Number.isFinite(to) && to > 0) bars = bars.filter(bar => bar.time <= to);
+  bars = bars.slice(-countBack);
   res.setHeader('Cache-Control', 'no-store');
-  res.json({ symbol, timeframe, bars: history.get(key) || [], connected: isFresh() });
+  res.json({ symbol, timeframe, bars, connected: isFresh() });
 });
 
 app.post('/api/market-data/ingest', (req, res) => {
@@ -143,6 +151,64 @@ app.post('/api/market-data/ingest', (req, res) => {
     if (client.readyState === WebSocket.OPEN) client.send(JSON.stringify(statusMessage()));
   }
   res.status(202).json({ accepted: true, symbol: normalizedSymbol, timeframe: normalizedTimeframe, storedBars: bars.length });
+});
+
+
+app.post('/api/market-data/tick', (req, res) => {
+  if (!INGEST_TOKEN) {
+    return res.status(503).json({ error: 'Market-data ingestion is disabled until NORTHSTAR_INGEST_TOKEN is configured' });
+  }
+  const authorization = req.get('authorization') || '';
+  if (authorization !== `Bearer ${INGEST_TOKEN}`) {
+    return res.status(401).json({ error: 'Unauthorized market-data publisher' });
+  }
+
+  const { symbol, price, size = 0, timestamp = Date.now(), provider } = req.body || {};
+  const normalizedSymbol = String(symbol || '').toUpperCase();
+  const numericPrice = Number(price);
+  const numericSize = Number(size);
+  const timestampMs = Number(timestamp);
+  if (!validSymbols.has(normalizedSymbol)
+    || !Number.isFinite(numericPrice) || numericPrice <= 0
+    || !Number.isFinite(numericSize) || numericSize < 0
+    || !Number.isFinite(timestampMs) || timestampMs <= 0) {
+    return res.status(400).json({ error: 'Expected NQ/MNQ symbol, positive price, non-negative size, and Unix timestamp in milliseconds' });
+  }
+
+  const updated = [];
+  for (const [timeframe, duration] of Object.entries(timeframeMs)) {
+    const bucketMs = Math.floor(timestampMs / duration) * duration;
+    const barTime = Math.floor(bucketMs / 1000);
+    const key = `${normalizedSymbol}:${timeframe}`;
+    const bars = history.get(key) || [];
+    const last = bars[bars.length - 1];
+
+    if (last && barTime < last.time) continue;
+    if (last && barTime === last.time) {
+      last.high = Math.max(last.high, numericPrice);
+      last.low = Math.min(last.low, numericPrice);
+      last.close = numericPrice;
+      last.volume = (last.volume || 0) + numericSize;
+    } else {
+      bars.push({ time: barTime, open: numericPrice, high: numericPrice, low: numericPrice, close: numericPrice, volume: numericSize });
+    }
+
+    if (bars.length > MAX_BARS_PER_SERIES) bars.splice(0, bars.length - MAX_BARS_PER_SERIES);
+    history.set(key, bars);
+    const bar = bars[bars.length - 1];
+    sendToMatchingClients({ type: 'bar', symbol: normalizedSymbol, timeframe, bar });
+    updated.push(timeframe);
+  }
+
+  if (typeof provider === 'string' && provider.trim()) {
+    providerName = provider.trim().slice(0, 80);
+  }
+  lastIngestAt = Date.now();
+  const status = JSON.stringify(statusMessage());
+  for (const client of wss.clients) {
+    if (client.readyState === WebSocket.OPEN) client.send(status);
+  }
+  res.status(202).json({ accepted: true, symbol: normalizedSymbol, updatedTimeframes: updated, provider: providerName });
 });
 
 app.use(express.static(path.resolve(__dirname, '../dist')));
