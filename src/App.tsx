@@ -162,6 +162,11 @@ function App() {
   const isTerminal = activePage === 'Trading Terminal';
   const moduleInfo = modules[activePage as keyof typeof modules];
 
+  const navigateTo = (page: string) => {
+    setActivePage(page);
+    setSidebarOpen(false);
+  };
+
   return (
     <div className="shell">
       {sidebarOpen && (
@@ -186,7 +191,7 @@ function App() {
             />
           </div>
 
-          <nav>
+          <nav onClickCapture={() => setSidebarOpen(false)}>
             {navigation.map((group) => {
               const filtered = group.items.filter((item) =>
                 item.name.toLowerCase().includes(search.toLowerCase())
@@ -203,7 +208,7 @@ function App() {
                       <button
                         key={item.name}
                         className={`nav ${activePage === item.name ? 'active' : ''}`}
-                        onClick={() => { setActivePage(item.name); setSidebarOpen(false); }}
+                        onClick={() => navigateTo(item.name)}
                       >
                         <Icon size={16} />
                         {item.name}
@@ -386,7 +391,7 @@ function App() {
 
                   <div className="side-panel">
                     <div className="side-head"><b>QUICK TOOLS</b></div>
-                    <button className="simple-empty quick-tool-link" onClick={() => setActivePage('Risk Manager')}>
+                    <button className="simple-empty quick-tool-link" onClick={() => navigateTo('Risk Manager')}>
                       Open the NQ / MNQ risk calculator →
                     </button>
                   </div>
