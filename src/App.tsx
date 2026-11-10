@@ -200,7 +200,7 @@ function App() {
                       <button
                         key={item.name}
                         className={`nav ${activePage === item.name ? 'active' : ''}`}
-                        onClick={() => setActivePage(item.name)}
+                        onClick={() => { setActivePage(item.name); setSidebarOpen(false); }}
                       >
                         <Icon size={16} />
                         {item.name}
