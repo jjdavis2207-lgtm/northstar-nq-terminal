@@ -57,6 +57,45 @@ const navigation = [
       { name: 'Data Connections', icon: Database },
       { name: 'Settings', icon: Settings }
     ]
+  },
+  {
+    heading: 'DEEP TOOLS',
+    items: [
+      { name: 'Deep Frame Engine', icon: Layers },
+      { name: 'Deep Trades Reversal', icon: TrendingUp },
+      { name: 'Deep Radar', icon: Radio },
+      { name: 'Deep V Tracker 2.0', icon: Activity },
+      { name: 'Deep Flow', icon: Activity },
+      { name: 'Deep Zones', icon: Target },
+      { name: 'Deep Trades', icon: Crosshair },
+      { name: 'Deep V-Tracker', icon: Activity },
+      { name: 'Pattern Builder & Auto-Backtester', icon: BrainCircuit }
+    ]
+  },
+  {
+    heading: 'PREMIUM FEATURES',
+    items: [
+      { name: 'DeepGamma Institutional', icon: TrendingUp },
+      { name: 'DeepGamma Prime', icon: Zap },
+      { name: 'DeepGamma Chain', icon: Layers },
+      { name: 'Deep NQ Effort (by Fabervaale)', icon: BarChart3 }
+    ]
+  },
+  {
+    heading: 'GENERAL FEATURES',
+    items: [
+      { name: 'Big Trades', icon: Activity },
+      { name: 'Multi Year Historical Data', icon: Database },
+      { name: 'All Orderflow Indicators', icon: BarChart3 },
+      { name: 'Deep Replay', icon: Clock3 },
+      { name: 'Advanced DOM', icon: Layers },
+      { name: 'Demo Trading', icon: Crosshair },
+      { name: 'Portfolio Risk Manager', icon: Shield },
+      { name: 'Trade Copier', icon: Radio },
+      { name: 'Deep Templates', icon: Layers },
+      { name: '24/7 Support', icon: CircleHelp },
+      { name: 'Freeze Feature', icon: Clock3 }
+    ]
   }
 ];
 
@@ -385,7 +424,7 @@ function App() {
                 <div>
                   <div className="eyebrow">NORTHSTAR WORKSPACE</div>
                   <h2>{activePage}</h2>
-                  <p>{moduleInfo?.subtitle}</p>
+                  <p>{moduleInfo?.subtitle ?? 'Northstar feature workspace.'}</p>
                 </div>
               </div>
 
@@ -393,7 +432,7 @@ function App() {
                 <WifiOff size={19} />
                 <div>
                   <b>Connection required</b>
-                  <span>{moduleInfo?.description}</span>
+                  <span>{moduleInfo?.description ?? 'This feature has been added to the Northstar workspace menu. Its underlying data feed, calculations, and controls still need to be implemented and tested before it can be used for live trading.'}</span>
                 </div>
               </div>
 
